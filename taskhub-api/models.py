@@ -206,12 +206,10 @@ class File(db.Model):
     Name = Column(String)
     Path = Column(String)
     FolderId = Column(Integer, ForeignKey('folders.Id'), nullable=True)
-    PageId = Column(Integer, ForeignKey('pages.Id'), nullable=True)
     CreatedBy = Column(Integer, ForeignKey('users.Id'))
     CreatedDateTime = Column(DateTime)
     Iso265File = Column(Boolean)
     Folder = relationship('Folder', back_populates='Files')
-    Page = relationship('Page', back_populates='Files')
     CreatedByUser = relationship('User', foreign_keys=[CreatedBy], back_populates='FilesCreated', overlaps="FilesCreated")
 
     def serialize(self):
@@ -220,7 +218,6 @@ class File(db.Model):
             'name': self.Name,
             'path': self.Path,
             'folderId': self.FolderId,
-            'pageId': self.PageId,
             'createdBy': self.CreatedBy,
             'createdByUser': self.CreatedByUser.getfullname() if self.CreatedByUser else "",
             'createdDateTime': self.CreatedDateTime.isoformat() if self.CreatedDateTime else None,
@@ -391,7 +388,6 @@ class Page(db.Model):
     TextBoxes = relationship('TextBox', back_populates='Page')
     Cards = relationship('Card', back_populates='Page')
     Images = relationship('Image', back_populates='Page')
-    Files = relationship('File', back_populates='Page')
 
     def serialize(self):
         return {

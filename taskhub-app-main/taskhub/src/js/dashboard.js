@@ -279,8 +279,8 @@ export function init(vaultIdParam) {
 
         await addImageFromFAB(pageId);
         break;
-      case "file-upload":
-        await addFileUploadToPage();
+      case "file":
+        await addFileFromFAB(false);
         break;
       case "note":
         {
