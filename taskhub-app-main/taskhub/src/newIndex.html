@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tauri Dashboard</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/content.css">
+    <link rel="stylesheet" href="css/tabs.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/myvaults.css">
+    <link rel="stylesheet" href="css/settings.css" />
+    <link rel="stylesheet" href="css/subscription.css" />
+    <link rel="stylesheet" href="css/calendar.css">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Side Menu (ikonice) -->
+        <nav class="sidebar">
+            <!-- <div class="logo-container">
+                <img src="assets/images/logo.png" alt="App Logo">
+            </div> -->
+
+            <ul class="menu">
+            <li onclick="loadDashboard(event)">
+                <div class="icon-wrapper-bar" data-tooltip="Dashboard">
+                    <img src="assets/images/dashboard.svg" class="menu-icon" alt="Dashboard">
+                </div>
+            </li>
+            <li class="active" onclick="loadVaults(event)">
+                <div class="icon-wrapper-bar" data-tooltip="Vaults">
+                    <img src="assets/images/vault.svg" class="menu-icon" alt="Vaults">
+                </div>
+            </li>
+            <li onclick="loadCalendar(event)">
+                <div class="icon-wrapper-bar" data-tooltip="Calendar">
+                    <img src="assets/images/calendar.svg" class="menu-icon" alt="Calendar">
+                </div>
+            </li>
+            <li onclick="loadSettings(event)">
+                <div class="icon-wrapper-bar" data-tooltip="Settings">
+                    <img src="assets/images/gear.png" class="menu-icon" alt="Settings">
+                </div>
+            </li>
+            <li onclick="logout(event)">
+                <div class="icon-wrapper-bar" data-tooltip="Logout">
+                    <img src="assets/images/icon.svg" class="menu-icon" alt="Logout">
+                </div>
+            </li>
+            </ul>
+        </nav>
+
+        <!-- Container za sadržaj koji se dinamički učitava -->
+
+        <main id="main-content" style="flex-grow: 1; overflow: auto;">
+            <!-- Ovde ubacujemo dashboard.html, workspace.html itd. -->
+        </main>
+
+    </div>
+    <script type="module" src="js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leader-line/1.0.7/leader-line.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+</body>
+
+</html>

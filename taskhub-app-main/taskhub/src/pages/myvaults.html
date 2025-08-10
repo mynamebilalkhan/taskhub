@@ -1,0 +1,220 @@
+<div class="page-container">
+  <aside class="file-navigation">
+    <div class="search-bar">
+      <img src="../assets/images/search.svg" />
+      <input type="text" placeholder="Search...">
+    </div>
+    <div class="folder-tree-container">
+      <ul class="folder-tree">
+
+      </ul>
+    </div>
+
+    <!-- Footer icons (popravljeno) -->
+     <div class="file-navigation-footer">
+            <div class="icon-wrapper" data-tooltip="Delete">
+                <img src="../assets/images/icon-delete.svg" class="footer-icon" alt="Delete">
+            </div>
+            <div class="icon-wrapper" data-tooltip="Add Folder">
+                <img src="../assets/images/icon-add-folder.svg" class="footer-icon" alt="Add Folder">
+            </div>
+            <div class="icon-wrapper" data-tooltip="Share">
+                <img src="../assets/images/icon-share.svg" class="footer-icon" alt="Share">
+            </div>
+            <div class="icon-wrapper" data-tooltip="Add Vault">
+                <img src="../assets/images/icon-add-vault.svg" class="footer-icon" alt="Add Vault">
+            </div>
+        </div>
+    <div class="vault-storage-card" data-vault-id="2">
+      <div class="vault-storage-header">
+        <h3 class="vault-storage-name">
+          Used Space
+        </h3>
+      </div>
+      <div class="vault-storage-details">
+        <div class="vault-storage-detail-label"><span>You've used 820 GB of your 1 TB available space.</span></div>
+        <div class="storage-bar-container">
+          <div class="storage-bar" style="width: 80%;"></div>
+        </div>
+        <div class="vault-storage-label"><span>Upgade Plan</span>
+      </div>
+    </div>
+  </aside>
+
+  <section class="vaults-section">
+    <!-- Message display -->
+    <div id="vaults-message" class="vaults-message hidden"></div>
+
+    <!-- Gornji naslov -->
+    <div class="vaults-title">
+      <h2>Organization</h2>
+      <div class="toolbar-buttons">
+        <button id="more-options-button">
+          <img src="../assets/images/dots.svg" alt="More" />
+        </button>
+        <button id="add-vault-button">Add New</button>
+      </div>
+    </div>
+    <p class="breadcrumb">Work Life / Job 1</p>
+
+
+    <!-- Srednji red: Search i dugme -->
+    <!-- <div class="vaults-toolbar">
+          <div class="search-wrapper">
+            <img src="../assets/images/search.svg" alt="Search" />
+            <input type="text" id="vault-search" placeholder="Search" />
+          </div>
+      
+          <div class="toolbar-buttons">
+            <button id="more-options-button">
+              <img src="../assets/images/dots.svg" alt="More" />
+            </button>
+            <button id="add-vault-button">Add New</button>
+          </div>
+        </div> -->
+
+    <!-- Kartice vaultova -->
+    <div class="vaults-container"></div>
+    
+    <!-- Loading overlay -->
+    <div id="vault-loading-overlay" class="vault-loading-overlay hidden">
+      <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading...</div>
+      </div>
+    </div>
+  </section>
+  <div id="vault-modal" class="vault-modal">
+    <div class="vault-modal-content">
+      <div class="vaults-title">
+        <h3>Create Vault</h3>
+        <div class="toolbar-buttons">
+          <button class="block-circle-button cancel-vault">
+            <img src="../assets/images/block-circle.svg" alt="More" />
+          </button>
+        </div>
+      </div>
+      <input type="text" id="vault-name-input" placeholder="Enter vault name..." />
+      <div class="vault-modal-actions">
+        <button class="cancel-vault cancel">Cancel</button>
+        <button id="confirm-vault">Create</button>
+      </div>
+    </div>
+  </div>
+  <div id="vault-menu" class="vault-context-menu" style="display: none;">
+    <div class="menu-item" id="copy-vault">
+      <img src="../assets/images/copy.svg" />
+      Copy
+    </div>
+    <div class="menu-item" id="duplicate-vault">
+      <img src="../assets/images/duplicate.svg" />
+      Duplicate
+    </div>
+    <div class="menu-item" id="copy-link-vault">
+      <img src="../assets/images/link.svg" />
+      Copy Link
+    </div>
+    <div class="menu-item" id="paste-link-vault">
+      <img src="../assets/images/link.svg" />
+      Paste Link
+    </div>
+    <div class="menu-item" id="edit-permissions">
+      <img src="../assets/images/permission.svg" />
+      Permissions
+    </div>
+    <div class="menu-item" id="rename-vault">
+      <img src="../assets/images/copy.svg" />
+      Rename
+    </div>
+    <div class="menu-item" id="delete-vault">
+      <img src="../assets/images/delete.svg" />
+      Delete
+    </div>
+  </div>
+  <div id="permissions-modal" class="vault-modal">
+    <div class="vault-modal-content" style="width: 400px;">
+      <h3>Permissions</h3>
+      <div class="permissions-section">
+        <div id="current-permissions-list"
+          style="max-height: 150px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 8px; margin-bottom: 15px;">
+          <!-- Permissions will be dynamically added here -->
+         </div>
+      </div> 
+
+      <!-- Add new permission section -->
+     <div class="add-permission-section">
+  <div style="display: flex; gap: 8px; align-items: center;">
+    <div style="flex: 1;">
+      <div style="flex: 1; position: relative;">
+  <div style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; z-index: 1;">
+    <img src="../assets/images/user-02.svg" alt="link icon" style="width: 16px; height: 16px; opacity: 0.6;">
+  </div>
+  <input 
+    type="email" 
+    id="email-input" 
+    placeholder="Enter email or name"
+    style="width: 100%; padding: 10px 12px 10px 36px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; color: #374151; box-sizing: border-box;"
+  />
+</div>
+    </div>
+    <div style="position: relative;">
+      <div style="position: relative;">
+  <div style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; z-index: 1;">
+    <img src="../assets/images/eye.svg" alt="permission icon" style="width: 16px; height: 16px; opacity: 0.6;">
+  </div>
+  <select 
+    id="permission-type-select" 
+    style="padding: 10px 32px 10px 36px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; color: #374151; background: white; cursor: pointer; appearance: none; min-width: 100px;"
+  >
+    <option value="viewer">Viewer</option>
+    <option value="editor">Editor</option>
+  </select>
+  <!-- Custom dropdown arrow -->
+  <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none;">
+    <div style="width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid #666;"></div>
+  </div>
+</div>
+      <!-- Custom dropdown arrow -->
+      <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none;">
+        <div style="width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid #666;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="vault-modal-actions" style="margin-top: 20px;">
+        <button id="cancel-permissions" class="cancel">Cancel</button>
+        <button id="add-permission-btn"
+            style="padding: 6px 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Upload</button>
+        
+      </div>
+    </div>
+  </div>
+  <div id="rename-modal" class="vault-modal">
+    <div class="vault-modal-content">
+      <h3>Rename Vault</h3>
+      <input type="text" id="rename-vault-input" placeholder="Enter new vault name..." />
+      <div class="vault-modal-actions">
+        <button id="confirm-rename">Save</button>
+        <button id="cancel-rename" class="cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="delete-vault-modal" class="vault-modal">
+    <div class="vault-modal-content">
+      <h3 style="color: #d63384;">⚠️ Delete Vault</h3>
+      <p style="margin-bottom: 20px; line-height: 1.5;">
+        This action is <strong>undoable</strong>. All the data in this vault will be gone permanently.
+      </p>
+      <p style="margin-bottom: 20px; font-weight: 600;">
+        Are you sure you want to delete this vault?
+      </p>
+      <div class="vault-modal-actions">
+        <button id="cancel-delete" class="cancel">Cancel</button>
+        <button id="confirm-delete" style="background-color: #d63384; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

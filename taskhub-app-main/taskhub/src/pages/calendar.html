@@ -1,0 +1,589 @@
+<div class="calendar-wrapper">
+	<!-- Left sidebar -->
+	<aside class="calendar-left-menu">
+		<div class="sidebar-header">
+			<h3>Quick Access</h3>
+		</div>
+
+		<div class="sidebar-scrollable">
+			<!-- Pinned Tasks -->
+			<div class="expandable-section">
+				<button class="section-header" data-target="pinned-tasks-list">
+					<img src="../assets/images/chevron-down.svg" class="chevron-icon" alt="toggle" />
+					<div class="section-label">
+						<img src="../assets/images/icon-pinned.png" class="section-icon" alt="Pinned Tasks" />
+						<span class="section-title">Pinned Tasks</span>
+						<span class="task-count" id="pinned-count">0</span>
+					</div>
+				</button>
+				<ul id="pinned-tasks-list" class="section-content">
+					<!-- Tasks will be populated dynamically -->
+				</ul>
+			</div>
+
+			<!-- Favorites -->
+			<div class="expandable-section">
+				<button class="section-header" data-target="favorites-list">
+					<img src="../assets/images/chevron-down.svg" class="chevron-icon" alt="toggle" />
+					<div class="section-label">
+						<img src="../assets/images/icon-favourites.png" class="section-icon" alt="Favorites" />
+						<span class="section-title">Favorites</span>
+						<span class="task-count" id="favorites-count">0</span>
+					</div>
+				</button>
+				<ul id="favorites-list" class="section-content"></ul>
+			</div>
+
+			<!-- Your Day -->
+			<div class="expandable-section">
+				<button class="section-header" data-target="due-today-list">
+					<img src="../assets/images/chevron-down.svg" class="chevron-icon" alt="toggle" />
+					<div class="section-label">
+						<img src="../assets/images/icon-your-day.png" class="section-icon" alt="Your Day" />
+						<span class="section-title">Your Day</span>
+						<span class="task-count" id="today-count">0</span>
+					</div>
+				</button>
+				<ul id="due-today-list" class="section-content">
+					<!-- Tasks and cards due today will be populated here -->
+				</ul>
+			</div>
+
+			<!-- Assigned Tasks -->
+			<div class="expandable-section">
+				<button class="section-header" data-target="assigned-tasks-list">
+					<img src="../assets/images/chevron-down.svg" class="chevron-icon" alt="toggle" />
+					<div class="section-label">
+						<img src="../assets/images/icon-assigned.png" class="section-icon" alt="Assigned Tasks" />
+						<span class="section-title">Assigned Tasks</span>
+						<span class="task-count" id="assigned-count">0</span>
+					</div>
+				</button>
+				<ul id="assigned-tasks-list" class="section-content"></ul>
+			</div>
+
+			<!-- Upcoming Events -->
+			<div class="expandable-section">
+				<button class="section-header" data-target="upcoming-events-list">
+					<img src="../assets/images/chevron-down.svg" class="chevron-icon" alt="toggle" />
+					<div class="section-label">
+						<img src="../assets/images/calendar.svg" class="section-icon" alt="Upcoming Events" />
+						<span class="section-title">Upcoming Events</span>
+						<span class="task-count" id="upcoming-count">0</span>
+					</div>
+				</button>
+				<ul id="upcoming-events-list" class="section-content"></ul>
+			</div>
+		</div>
+
+		<!-- Footer icons -->
+		<div class="sidebar-footer-icons">
+			<button class="footer-btn calendar-delete-btn" title="Delete">
+				<img src="../assets/images/icon-delete.svg" alt="Delete" />
+			</button>
+			<button class="footer-btn" id="quick-add-event" title="Quick Add Event">
+				<img src="../assets/images/add-event.svg" alt="Add Event" />
+			</button>
+			<button class="footer-btn" id="quick-add-task" title="Quick Add Task">
+				<img src="../assets/images/book-02.svg" alt="Add Task" />
+			</button>
+			<button class="footer-btn" title="Undo">
+				<img src="../assets/images/icon-flip-backward.svg" alt="Undo" />
+			</button>
+			<button class="footer-btn" title="Redo">
+				<img src="../assets/images/icon-flip-forward.svg" alt="Forward" />
+			</button>
+		</div>
+	</aside>
+
+	<!-- Main calendar area -->
+	<div class="calendar-main">
+		<div class="calendar-header">
+			<div class="calendar-header-left">
+				<h2>Calendar</h2>
+				<div class="calendar-view-selector">
+					<button class="view-btn active" data-view="timeGridWeek">Week</button>
+					<button class="view-btn" data-view="dayGridMonth">Month</button>
+					<button class="view-btn" data-view="timeGridDay">Day</button>
+				</div>
+			</div>
+			<div class="calendar-header-right">
+				<!-- Month Navigation -->
+				<div class="month-navigation-container">
+					<div class="month-display">
+						<img src="../assets/images/calendar.svg" alt="Calendar" />
+						<span id="current-month-name">January 2025</span>
+					</div>
+					<button class="nav-btn prev-btn" id="prev-month-btn">
+						<img src="../assets/images/chevron-left.svg" alt="Previous" />
+					</button>
+					<button class="nav-btn next-btn" id="next-month-btn">
+						<img src="../assets/images/chevron-right.svg" alt="Next" />
+					</button>
+					<!-- <button class="today-btn" id="go-to-today-btn">
+            <span>Today</span>
+          </button> -->
+				</div>
+
+				<!-- <button class="calendar-btn secondary" id="refresh-btn">
+          <img src="../assets/images/refresh.svg" alt="Refresh" />
+          Refresh
+        </button> -->
+				<button class="calendar-btn primary" id="new-event-btn">
+					New Event
+				</button>
+			</div>
+		</div>
+
+		<div class="calendar-container">
+			<div id="calendar"></div>
+			
+			<!-- Loading overlay -->
+			<div id="calendar-loading-overlay" class="calendar-loading-overlay hidden">
+				<div class="loading-content">
+					<div class="loading-spinner"></div>
+					<div class="loading-text">Loading...</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal for creating a new event -->
+	<div id="event-modal" class="calendar-modal hidden">
+		<div class="calendar-modal-content">
+			<!-- Modal Header -->
+			<div class="modal-header">
+				<div class="modal-header-left">
+					<div class="modal-header-left-icon">
+						<img src="../assets/images/Icon.png" alt="Calendar" />
+					</div>
+					<h3 class="modal-title">New Event</h3>
+				</div>
+				<div class="modal-header-right">
+					<button class="modal-close-btn" id="close-modal">
+						<img src="../assets/images/event-close.png" alt="Close" />
+					</button>
+				</div>
+			</div>
+
+			<!-- Event Form -->
+			<form id="event-form">
+				<!-- Title Input -->
+				<div class="form-group">
+					<div class="form-field">
+						<img src="../assets/images/pencil-line-01.svg" class="field-icon" alt="Title" />
+						<input type="text" id="event-title" placeholder="Add title" class="form-field-input"
+							required>
+					</div>
+				</div>
+
+				<!-- Attendees Input -->
+				<div class="form-group">
+					<div class="form-field">
+						<img src="../assets/images/attendees.svg" class="field-icon" alt="Attendees" />
+						<input type="text" id="event-user-emails"
+							placeholder="Add required attendees (comma separated emails)"
+							class="form-field-input">
+					</div>
+				</div>
+
+				<!-- Date and Time -->
+				<div class="form-group">
+					<div class="form-field">
+						<img src="../assets/images/clock-03.svg" class="field-icon" alt="Date" />
+						<div class="datetime-container" id="datetime-container">
+							<div class="datetime-row">
+								<label for="event-from">From</label>
+								<input type="datetime-local" id="event-from" class="form-field-input" required>
+							</div>
+
+							<div class="datetime-row">
+								<label for="event-to">To</label>
+								<input type="datetime-local" id="event-to" class="form-field-input" required>
+							</div>
+						</div>
+
+						<!-- All Day Date Container -->
+						<div class="allday-container hidden" id="allday-container">
+							<div class="datetime-row">
+								<label for="event-from-date">From</label>
+								<input type="date" id="event-from-date" class="form-field-input">
+							</div>
+
+							<div class="datetime-row">
+								<label for="event-to-date">To</label>
+								<input type="date" id="event-to-date" class="form-field-input">
+							</div>
+						</div>
+
+						<!-- All Day Toggle (Optional) -->
+						<div class="all-day-toggle">
+							<label class="toggle-switch">
+								<input type="checkbox" id="all-day-toggle">
+								<span class="toggle-slider"></span>
+								<span class="toggle-label">All Day</span>
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<!-- Frequency and Color -->
+				<div class="form-group">
+					<div class="form-field">
+						<img src="../assets/images/repeat-01.svg" class="field-icon" alt="Frequency" />
+						<div class="datetime-container">
+							<div class="datetime-row">
+								<!-- <label for="event-frequency">Frequency</label> -->
+								<select id="event-frequency" class="form-field-input">
+									<option value="none">Do not repeat</option>
+									<option value="daily">Daily</option>
+									<option value="weekly">Weekly</option>
+									<option value="monthly">Monthly</option>
+									<option value="yearly">Yearly</option>
+								</select>
+							</div>
+							<!-- Color Selection -->
+							<div class="color-picker-switch">
+								<div class="color-picker-switch-inner">
+									<img src="../assets/images/calendar.svg" class="field-icon" alt="Color" />
+									<div class="color-field-container">
+										<!-- <label for="event-color">Event Color</label> -->
+										<div class="color-field-input" id="color-field-input">
+											<div class="color-preview" id="selected-color-preview"></div>
+											<span class="color-label" id="selected-color-label">Teal</span>
+											<img src="../assets/images/chevron-down.svg"
+												class="dropdown-arrow" alt="Select color" />
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Location -->
+				<div class="form-group">
+					<div class="form-field">
+						<img src="../assets/images/link-03.svg" class="field-icon" alt="Location" />
+						<input type="text" id="event-location" placeholder="Add location"
+							class="form-field-input">
+					</div>
+				</div>
+
+				<!-- Description -->
+				<div class="form-group">
+					<div class="form-field">
+						<img src="../assets/images/attendees.svg" class="field-icon" alt="Description" />
+						<div class="textarea-container">
+							<textarea id="event-description"
+								placeholder="Add a detailed description for your event..."
+								class="form-field-input" rows="4" maxlength="500"></textarea>
+							<div class="char-counter">
+								<span id="description-char-count">0</span>/500
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Modal Footer -->
+				<div class="modal-footer">
+					<div class="modal-footer-right">
+						<button type="button" class="cancel-btn" id="modal-cancel-btn">Cancel</button>
+						<button type="submit" class="schedule-btn">Schedule</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<!-- Color Picker Modal -->
+	<div id="color-picker-modal" class="color-picker-modal hidden">
+		<div class="color-picker-content">
+			<div class="color-picker-header">
+				<h4>Event color</h4>
+				<button class="color-picker-close" id="color-picker-close">
+					<img src="../assets/images/icon-delete.svg" alt="Close" />
+				</button>
+			</div>
+			<div class="color-grid">
+				<div class="color-option" data-color="red" style="background-color: #ea4335;">
+					<div class="color-checkmark hidden">✓</div>
+				</div>
+				<div class="color-option" data-color="orange" style="background-color: #ff9800;">
+					<div class="color-checkmark hidden">✓</div>
+				</div>
+				<div class="color-option" data-color="yellow" style="background-color: #fbbc04;">
+					<div class="color-checkmark hidden">✓</div>
+				</div>
+				<div class="color-option" data-color="green" style="background-color: #34a853;">
+					<div class="color-checkmark hidden">✓</div>
+				</div>
+				<div class="color-option" data-color="teal" style="background-color: #00bcd4;">
+					<div class="color-checkmark hidden">✓</div>
+				</div>
+				<div class="color-option" data-color="blue" style="background-color: #4285f4;">
+					<div class="color-checkmark hidden">✓</div>
+				</div>
+				<div class="color-option" data-color="indigo" style="background-color: #3f51b5;">
+					<div class="color-checkmark hidden">✓</div>
+				</div>
+				<div class="color-option" data-color="purple" style="background-color: #9c27b0;">
+					<div class="color-checkmark hidden">✓</div>
+				</div>
+				<div class="color-option" data-color="pink" style="background-color: #e91e63;">
+					<div class="color-checkmark hidden">✓</div>
+				</div>
+				<div class="color-option" data-color="brown" style="background-color: #795548;">
+					<div class="color-checkmark hidden">✓</div>
+				</div>
+				<div class="color-option" data-color="gray" style="background-color: #9aa0a6;">
+					<div class="color-checkmark hidden">✓</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal for viewing event details on click -->
+	<div id="event-detail-modal" class="calendar-modal hidden">
+		<div class="calendar-modal-content">
+			<div class="modal-header">
+				<div class="modal-header-left">
+					<span class="event-detail-icon-color" id="detail-color"></span>
+					<span id="detail-title"></span>
+				</div>
+				<div class="modal-header-right">
+					<button class="modal-close-btn" id="detail-close-btn">
+						<img src="../assets/images/event-close.png" alt="Close" />
+					</button>
+				</div>
+			</div>
+
+			<div class="modal-body">
+				<div class="modal-top-part">
+					<div class="modal-top-part-left">
+						<div class="detail-field">
+							<label>Location:</label>
+							<span id="detail-location"></span>
+						</div>
+					</div>
+					<div class="modal-top-part-right">
+
+					</div>
+				</div>
+				<div class="modal-top-part">
+					<div class="detail-field" style="padding: 25px;">
+						<label>Agenda</label>
+						<span id="detail-description"></span>
+					</div>
+				</div>
+				<div class="modal-bottom-part">
+					<div class="modal-bottom-part-left">
+						<div class="detail-field">
+							<label>Start:</label>
+							<span id="detail-from"></span>
+						</div>
+						<div class="detail-field">
+							<label>End:</label>
+							<span id="detail-to"></span>
+						</div>
+					</div>
+					<div class="modal-bottom-part-right">
+						<div class="detail-field">
+							<label>Frequency:</label>
+							<span id="detail-frequency"></span>
+						</div>
+						<div class="detail-field">
+							<label>Attendees:</label>
+							<span id="detail-users"></span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Modal Actions -->
+			<div class="modal-footer">
+				<div class="modal-footer-left" style="padding: 0 15px;">
+					<button type="button" class="delete-btn" id="detail-delete-btn">
+						<img src="../assets/images/icon-delete.svg" alt="Delete" />
+					</button>
+				</div>
+				<!-- <div class="modal-footer-right">
+          <button type="button" class="cancel-btn" id="detail-close-btn">Close</button>
+        </div> -->
+			</div>
+		</div>
+	</div>
+</div>
+<!-- Modal for viewing task details on click -->
+<div id="task-detail-modal" class="calendar-modal hidden">
+	<!-- <div id="task-detail-modal" class="calendar-modal"> -->
+	<div class="calendar-modal-content">
+		<div class="modal-header">
+			<div class="modal-header-left">
+				<div class="modal-header-left-icon">
+					<img src="../assets/images/Icon.png" alt="Delete" />	
+				</div>
+				<h3 class="modal-title"><span id="task-detail-title"></span></h3>
+			</div>
+			<div class="modal-header-right">
+				<button class="modal-close-btn" id="task-detail-close-btn">
+					<img src="../assets/images/event-close.png" alt="Close" />
+				</button>
+			</div>
+		</div>
+		<div class="modal-body" style="margin-bottom: -10px;">
+			<div class="modal-bottom-part">
+				<div class="modal-bottom-part-left w-full border-none">
+					<div class="detail-field">
+						<p><span id="task-detail-createdby"></span></p>
+					</div>
+					<div class="detail-field mb-0">
+						<p><span id="task-detail-assigned"></span></p>
+					</div>
+				</div>
+			</div>
+			<div class="modal-bottom-part">
+				<div class="modal-bottom-part-left w-full border-none">
+					<div class="detail-field mb-0">
+						<h3>Description</h3>
+						<p><span id="task-detail-desc"></span></p>
+					</div>
+				</div>
+			</div>
+			<div class="modal-bottom-part">
+				<div class="modal-bottom-part-left">
+					<div class="detail-field">
+						<h3>Industry</h3>
+						<p><span id="task-detail-industry"></span></p>
+					</div>
+					<div class="detail-field">
+						<h3>Due Date</h3>
+						<p><span id="task-detail-due"></span></p>
+					</div>
+				</div>
+				<div class="modal-bottom-part-right">
+					<div class="detail-field">
+						<h3>Status</h3>
+						<p><span id="task-detail-status"></span></p>
+					</div>
+					<div class="detail-field">
+						<h3>Priority</h3>
+						<p><span id="task-detail-priority"></span></p>
+					</div>
+				</div>
+			</div>
+			<div class="modal-bottom-part">
+				<div class="modal-bottom-part-left">
+					<div class="detail-field">
+						<h3>Created</h3>
+						<p><span id="task-detail-createdon"></span></p>
+					</div>
+				</div>
+				<div class="modal-bottom-part-right">
+					<div class="detail-field">
+						<h3>Last Modified</h3>
+						<p><span id="task-detail-modified"></span></p>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="modal-footer" style="padding: 0 15px 15px 0;">
+			<button type="button" class="delete-btn" id="task-delete-btn">
+				<img src="../assets/images/icon-delete.svg" alt="Delete" />
+			</button>
+		</div>
+	</div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-confirmation-modal" class="calendar-modal hidden">
+	<div class="calendar-modal-content">
+		<div class="modal-header">
+			<div class="modal-header-left">
+				<div class="modal-header-left-icon" style="background-color: #dc2626;">
+					<img src="../assets/images/icon-delete.svg" alt="Delete"
+						style="filter: brightness(0) invert(1);" />
+				</div>
+				<h3 class="modal-title">Delete Event</h3>
+			</div>
+			<div class="modal-header-right">
+				<button class="modal-close-btn" id="delete-confirmation-close-btn">
+					<img src="../assets/images/event-close.png" alt="Close" />
+				</button>
+			</div>
+		</div>
+
+		<div class="modal-body">
+			<p>Are you sure you want to delete the event "<span id="delete-event-title"></span>"?</p>
+			<p style="color: #6b7280; font-size: 14px; margin-top: 8px;">This action cannot be undone.</p>
+		</div>
+
+		<div class="modal-footer justify-center">
+			<div class="modal-footer-right">
+				<!-- <button type="button" class="cancel-btn" id="delete-confirmation-cancel-btn">Cancel</button> -->
+				<button type="button" class="delete-btn" id="delete-confirmation-delete-btn">
+					<img src="../assets/images/icon-delete.svg" alt="Delete" />
+					Delete Event
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Delete Task Confirmation Modal -->
+<div id="delete-task-confirmation-modal" class="calendar-modal hidden">
+	<div class="calendar-modal-content">
+		<div class="modal-header">
+			<div class="modal-header-left">
+				<div class="modal-header-left-icon" style="background-color: #dc2626;">
+					<img src="../assets/images/icon-delete.svg" alt="Delete"
+						style="filter: brightness(0) invert(1);" />
+				</div>
+				<h3 class="modal-title">Delete Task</h3>
+			</div>
+			<div class="modal-header-right">
+				<button class="modal-close-btn" id="delete-task-confirmation-close-btn">
+					<img src="../assets/images/event-close.png" alt="Close" />
+				</button>
+			</div>
+		</div>
+
+		<div class="modal-body">
+			<p>Are you sure you want to delete the task "<span id="delete-task-title"></span>"?</p>
+			<p style="color: #6b7280; font-size: 14px; margin-top: 8px;">This action cannot be undone.</p>
+		</div>
+
+		<div class="modal-footer justify-center">
+			<div class="modal-footer-right">
+				<button type="button" class="delete-btn" id="delete-task-confirmation-delete-btn">
+					<img src="../assets/images/icon-delete.svg" alt="Delete" />
+					Delete Task
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal for creating a new task -->
+<div class="modal-overlay hidden" id="add-task-modal">
+	<div class="modal">
+		<h3>Add New Task</h3>
+		<input type="text" id="task-title" placeholder="Title">
+		<select id="task-vault-id">
+			<option value="" disabled selected>Select Vault</option>
+		</select>
+		<textarea id="task-description" placeholder="Description"></textarea>
+		<input type="date" id="task-due-date" placeholder="Due Date">
+		<input type="text" id="task-status" placeholder="Status">
+		<input type="text" id="task-priority" placeholder="Priority">
+		<select id="task-assigned-id">
+			<option value="" disabled selected>Assigned To</option>
+		</select>
+		<input type="text" id="task-industry" placeholder="Industry">
+
+		<div class="modal-actions">
+			<button id="save-task-btn">Save</button>
+			<button id="cancel-task-btn">Cancel</button>
+		</div>
+	</div>
+</div>

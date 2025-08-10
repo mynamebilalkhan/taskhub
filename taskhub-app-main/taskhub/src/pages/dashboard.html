@@ -1,0 +1,242 @@
+<div class="page-container">
+    <aside class="file-navigation">
+        <!-- <div class="search-bar">
+            <input type="text" placeholder="Search">
+        </div> -->
+        <div id="selected-vault-name" class="vault-header-title"> </div>
+        <div class="folder-tree-container" id="side-bar-container">
+            <ul class="folder-tree">
+
+            </ul>
+        </div>
+
+        <!-- Footer icon -->
+        <div class="file-navigation-footer">
+            <div class="icon-wrapper" data-tooltip="Delete">
+                <img src="../assets/images/icon-delete.svg" class="footer-icon" id="delete-icon" alt="Delete">
+            </div>
+            <div class="icon-wrapper" data-tooltip="Share">
+                <img src="../assets/images/icon-share.svg" class="footer-icon" id="share-icon" alt="Share">
+            </div>
+            <div class="icon-wrapper" data-tooltip="Add Folder">
+                <img src="../assets/images/icon-add-folder.svg" class="footer-icon" id="footer-add-folder"
+                    alt="Add Folder">
+            </div>
+            <div class="icon-wrapper" data-tooltip="Add File">
+                <img src="../assets/images/icon-add-file.svg" class="footer-icon" id="add-file-icon" alt="Add File">
+            </div>
+            <div class="icon-wrapper" data-tooltip="File Up">
+                <img src="../assets/images/icon-file-up.svg" class="footer-icon" id="file-up-icon" alt="File Up">
+            </div>
+            <div class="icon-wrapper" data-tooltip="Previous">
+                <img src="../assets/images/icon-flip-backward.svg" class="footer-icon" id="flip-backward-icon"
+                    alt="Previous">
+            </div>
+            <div class="icon-wrapper" data-tooltip="Next">
+                <img src="../assets/images/icon-flip-forward.svg" class="footer-icon" id="flip-forward-icon" alt="Next">
+            </div>
+        </div>
+    </aside>
+
+    <section class="page-content">
+        <!-- Delete message -->
+        <div id="delete-message" class="delete-message hidden"></div>
+
+        <!-- Tab bar -->
+        <div id="tabs-bar" class="tabs-bar"></div>
+        <!-- Tab content -->
+        <div id="tabs-content" class="tabs-content"></div>
+        
+        <!-- Loading overlay -->
+        <div id="dashboard-loading-overlay" class="dashboard-loading-overlay hidden">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Loading...</div>
+            </div>
+        </div>
+        <!-- <div class="file-navigation-footer">
+                <div class="workspace-tabs-inner">
+                    <button class="page-nav-arrow" id="page-tabs-left">&#x276E;</button>
+
+                    <div class="workspace-tabs-scrollable" id="workspace-tabs">
+
+                    </div>
+
+                    <button class="page-nav-arrow" id="page-tabs-right">&#x276F;</button>
+                    <button class="add-tab-circle" id="add-page-tab">+</button>
+                </div>
+        </div> -->
+    </section>
+
+    <link rel="stylesheet" href="../css/filter-dropdown.css">
+
+    <aside class="file-navigation-left" style="display: none;" id="infoSection">
+        <!-- Header / Vault Name -->
+        <div id="selected-vault-name" class="vault-header-title"></div>
+        <!-- Footer Icons -->
+        <div class="file-navigation-leftside">
+            <div class="icon-wrapper" id="filter-icon" title="Filter items" data-tooltip="Filter">
+                <img src="../assets/images/filter-01.svg" class="header-icon">
+            </div>
+            <div class="icon-wrapper" id="sort-icon" title="Sort items">
+                <img src="../assets/images/sort.svg" class="header-icon">
+            </div>
+            <div class="icon-wrapper" id="information-circle-icon" title="Show information">
+                <img src="../assets/images/information-circle.svg" class="header-icon">
+            </div>
+            <div id="filterDropdown" class="filter-dropdown">
+                <a href="#" title="Filter by date">Date</a>
+                <a href="#" title="Filter by priority level">Priority</a>
+                <a href="#" title="Filter by label category">Label</a>
+                <a href="#" title="Filter by current status">Status</a>
+                <a href="#" title="Filter by assigned person">Assignee</a>
+            </div>
+        </div>
+        <!-- Folder Tree Placeholder -->
+        <div class="folder-tree-container">
+            <ul class="folder-tree"></ul>
+        </div>
+        <div class="section-leftside">
+            <h4>Page Tags</h4>
+            <ul class="tag">
+                <li> <img src="../assets/images/hash.svg" alt="link icon"
+                        style="vertical-align: middle; margin-right: 5px;">Sales</li>
+                <li> <img src="../assets/images/hash.svg" alt="link icon"
+                        style="vertical-align: middle; margin-right: 5px;">Product</li>
+                <li> <img src="../assets/images/hash.svg" alt="link icon"
+                        style="vertical-align: middle; margin-right: 5px;">Software</li>
+                <li><img src="../assets/images/hash.svg" alt="link icon"
+                        style="vertical-align: middle; margin-right: 5px;">Development</li>
+                <li><img src="../assets/images/hash.svg" alt="link icon"
+                        style="vertical-align: middle; margin-right: 5px;">Technology</li>
+                <li><img src="../assets/images/hash.svg" alt="link icon"
+                        style="vertical-align: middle; margin-right: 5px;">Training</li>
+                <li><img src="../assets/images/hash.svg" alt="link icon"
+                        style="vertical-align: middle; margin-right: 5px;">Marketing</li>
+            </ul>
+        </div>
+
+        <!-- External Links -->
+        <div class="section-leftside">
+            <h4>External Links</h4>
+            <ul class="external-links">
+                <li><img src="../assets/images/link-03.svg" alt="link icon"
+                        style="vertical-align: middle; margin-right: 5px;"> https://dribbble.com/</a></li>
+                <li><img src="../assets/images/link-03.svg" alt="link icon"
+                        style="vertical-align: middle; margin-right: 5px;"> hhttps://notion.com/</a></li>
+                <li><img src="../assets/images/link-03.svg" alt="link icon"
+                        style="vertical-align: middle; margin-right: 5px;"> https://workspace.com/</a></li>
+                <li><img src="../assets/images/link-03.svg" alt="link icon"
+                        style="vertical-align: middle; margin-right: 5px;"> https://monday.com/</a></li>
+            </ul>
+        </div>
+
+        <!-- References -->
+        <div class="section">
+            <h4>References</h4>
+            <ul class="references">
+                <li><img src="../assets/images/text-align-left.svg" alt="link icon"
+                        style="vertical-align: middle; margin-right: 5px;"> Team Product Overview</li>
+                <li><img src="../assets/images/text-align-left.svg" alt="link icon"
+                        style="vertical-align: middle; margin-right: 5px;"> Data Science</li>
+            </ul>
+        </div>
+
+        <!-- Footer Icons -->
+        <!-- <div class="file-navigation-footer">
+        <img src="../assets/images/icon-delete.svg" class="footer-icon" id="delete-icon">
+        <img src="../assets/images/icon-share.svg" class="footer-icon" id="share-icon">
+        
+    </div> -->
+</div>
+</aside>
+<button class="fab hidden">+</button>
+<div class="fab-menu hidden" id="fab-menu">
+    <button class="fab-item" data-fab-action="tasklist">Task List</button>
+    <button class="fab-item" data-fab-action="card">Card</button>
+    <button class="fab-item" data-fab-action="image">Image</button>
+    <button class="fab-item" data-fab-action="file-upload">File Upload</button>
+    <button class="fab-item" data-fab-action="note">Note</button>
+    <!-- <button class="fab-item" data-fab-action="page" id="add-page-tab">Page</button> -->
+</div>
+<div id="context-menu" class="context-menu hidden">
+    <div class="menu-item">
+        <button data-action="new">
+            New
+            <span class="arrow">›</span>
+        </button>
+        <div class="submenu">
+            <button data-action="add-workspace">Workspace</button>
+            <button data-action="webpage">WebPage</button>
+            <button data-action="add-file">File</button>
+            <button data-action="add-folder">Folder</button>
+            <button data-action="add-url">URL</button>
+            <button data-action="add-file-o365">File O365</button>
+            <button data-action="add-textbox">Text Box</button>
+        </div>
+    </div>
+
+    <button data-action="copy">Copy</button>
+
+    <button data-action="paste">Paste</button>
+
+    <button data-action="rename">Rename</button>
+
+    <button data-action="duplicate">Duplicate</button>
+
+    <button data-action="delete">Delete</button>
+
+
+    <button data-action="copy-link">Copy Link</button>
+
+    <button data-action="download">Download</button>
+
+    <button data-action="get-info">Get Info</button>
+</div>
+
+<div id="customContextMenu" class="context-menu hidden">
+    <button id="new-tab-dropdown" data-action="add-workspace-tab">New Tab</button>
+    <button data-action="close-all">Close All</button>
+</div>
+
+<!-- <div id="sideContextMenu" class="context-menu hidden">
+        <div class="menu-item">
+            <button data-action="new">
+                New
+                <span class="arrow">›</span>
+            </button>
+            <div class="submenu">
+                <button data-action="add-workspace">Workspace</button>
+                <button data-action="webpage">WebPage</button>
+                <button data-action="add-file">File</button>
+                <button data-action="add-folder">Folder</button>
+            </div>
+        </div>
+        
+        <button data-action="paste">Paste</button>
+    </div> -->
+
+
+
+<div id="custom-modal" class="modal-overlay hidden">
+
+    <div class="modal">
+        <h2 id="modal-title">Enter a value</h2>
+
+        <label id="modal-label" for="modal-input">Label:</label>
+
+        <!-- Single-line input (show this if multiline=false) -->
+        <input type="text" id="modal-input" class="modal-input" />
+
+        <!-- Multiline textarea (show this if multiline=true) -->
+        <textarea id="modal-textarea" class="modal-textarea hidden" rows="6"></textarea>
+
+        <div class="modal-buttons">
+            <button id="modal-cancel-btn">Cancel</button>
+            <button id="modal-ok-btn">OK</button>
+        </div>
+    </div>
+</div>
+<input type="file" id="file-picker" style="display:none;" />
+<input type="file" id="page-file-upload" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" style="display:none;" />
+</div>

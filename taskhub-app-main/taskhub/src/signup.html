@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up - TaskHub</title>
+    <!-- This script handles ONLY signup logic -->
+    <script type="module" src="/signup.js" defer></script>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Logo -->
+        <div class="logo">
+            <img src="assets/logo.png" alt="Logo" />
+        </div>
+
+        <!-- Main heading & subheading -->
+        <h1 class="main-heading">Create an Account</h1>
+        <p class="subheading">Sign up to your account and get started.</p>
+
+        <!-- Debug / error messages -->
+        <p id="debug-msg"></p>
+
+        <!-- Sign-up form -->
+        <div id="signup-form" class="auth-form">
+            <label for="signup-firstname" class="label">First Name</label>
+            <input type="text" id="signup-firstname" placeholder="First Name" required />
+
+            <label for="signup-lastname" class="label">Last Name</label>
+            <input type="text" id="signup-lastname" placeholder="Last Name" required />
+
+            <label for="signup-username" class="label">Email or Username</label>
+            <input type="text" id="signup-username" placeholder="Email or Username" required />
+
+            <label for="signup-password" class="label">Password</label>
+            <input type="password" id="signup-password" placeholder="Password" required />
+
+            <!--<label for="signup-company" class="label">Company Name</label>
+            <input type="text" id="signup-company" placeholder="Company Name" required />
+            -->
+
+            <!-- TnC checkbox (optional) -->
+            <div class="options-row">
+            <div class="checkbox-container">
+                <input type="checkbox" id="signup-tnc" class="register-stay-logged" />
+                <label for="signup-tnc">
+                    By checking this box, you agree to accept our
+                    <a href="#">Privacy Policy</a> and
+                    <a href="#">Terms & Conditions</a>.
+                </label>
+            </div>
+            </div>
+
+
+            <button id="signup-button" class="btn-primary">Sign Up</button>
+        </div>
+
+        <div class="signup-cta">
+            <p>
+                Already have an account?
+                <!-- Link back to login.html -->
+                <a href="index.html" class="link-button">Login</a>
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

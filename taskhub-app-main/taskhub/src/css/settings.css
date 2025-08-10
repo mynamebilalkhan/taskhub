@@ -1,0 +1,902 @@
+/* =========================
+   General Container Layout
+   ========================= */
+.settings-container {
+  font-family: var(--font-family-inter, sans-serif);
+  color: #333;
+  background: #fff;
+  /* fill parent if desired */
+}
+
+.page-container {
+  display: flex;
+  /* sidebar + main content side-by-side */
+  flex-direction: row;
+  height: 100vh;
+  /* or 100%, up to you */
+  width: 100%;
+  overflow: hidden;
+  /* no horizontal scroll */
+}
+
+/* =========================
+   Left Sidebar
+   ========================= */
+.file-navigation {
+  width: 250px;
+  background: #fafdff;
+  border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+}
+
+.search-bar {
+  padding: 10px;
+}
+
+.folder-tree-container {
+ list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.folder-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.settings-menu-item {
+ display: flex;
+    align-items: center;
+    gap: 8px; /* Space between icon and text */
+    padding: 10px;
+    cursor: pointer;
+}
+.settings-menu-item:hover,
+.settings-menu-item.active {
+  background: #e6f0ff;
+  font-weight: 500;
+}
+
+.file-navigation-footer {
+  border-top: 1px solid #ddd;
+  padding: 10px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.footer-icon {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+/* =========================
+   Main Content Area
+   ========================= */
+.page-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  
+  overflow: hidden;
+  padding: 20px;
+}
+
+
+.settings-panels-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 20px;
+ 
+}
+
+/* =========================
+   Headings, Subtitles
+   ========================= */
+.settings-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.settings-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+/* =========================
+   Panels + Cards
+   ========================= */
+.settings-panel {
+  margin-bottom: 20px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.settings-card {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  position: relative;
+  box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.1);
+}
+
+.settings-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+}
+
+.settings-card p {
+  font-size: 14px;
+  color: #555;
+  margin: 0 0 15px 0;
+}
+
+/* Buttons in top-right corner (Save/Reset) */
+.connect-o365-btn,
+.save-btn,
+.reset-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #f0f0f0;
+  border: none;
+  font-size: 14px;
+  color: #333;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.connect-o365-btn:hover,
+.save-btn:hover,
+.reset-btn:hover {
+  background: #007ecc;
+  color: #fff;
+}
+
+.o365-message {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+  /* default neutral color */
+}
+
+.o365-message.success {
+  color: #0a0;
+  /* green for success */
+}
+
+.o365-message.error {
+  color: #a00;
+  /* red for errors */
+}
+
+/* Form fields */
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.form-group input {
+  width: 100%;
+  font-size: 14px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.form-group .note {
+  font-size: 12px;
+  color: #777;
+  margin-top: 5px;
+}
+
+/* =========================
+   Storage Section
+   ========================= */
+.storage-section {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.1);
+  
+}
+
+.storage-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+}
+
+.storage-section .used-info {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.storage-progress-container {
+  background: #e0f1fe;
+  border-radius: 4px;
+  width: 100%;
+  height: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.storage-progress {
+  background: #007ecc;
+  height: 100%;
+  width: 3.2%;
+}
+
+/* =========================
+   Subscription Plan Cards
+   ========================= */
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.plan-card {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 20px;
+  position: relative;
+  box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s, border 0.2s;
+}
+
+/* Hover effect (optional) */
+.plan-card:hover {
+  box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* If the card is "selected", highlight it */
+.plan-card.selected {
+  border: 2px solid #007ecc;
+  box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
+}
+
+.plan-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 10px;
+}
+
+/* Circle icon with blue border */
+.plan-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #007ecc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #007ecc;
+  background: #fff;
+  font-size: 18px;
+}
+
+.plan-card.selected .plan-icon {
+  background: #007ecc;
+  color: #fff;
+  /* the "◉" or check mark goes white */
+}
+
+/* Title/Subtitles/Description */
+.plan-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.plan-subtitle {
+  font-size: 0.9rem;
+  color: #777;
+  margin-top: 2px;
+}
+
+.plan-description {
+  font-size: 0.95rem;
+  color: #555;
+  margin-bottom: 1rem;
+}
+
+/* Price text */
+.price {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.price span {
+  font-size: 1rem;
+  font-weight: normal;
+  color: #888;
+}
+
+/* Features list */
+.features-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.features-list {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 1.5rem;
+}
+
+.features-list li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.features-list li::before {
+  content: "✔";
+  position: absolute;
+  left: 0;
+  color: #4CAF50;
+}
+
+/* Plan button */
+.plan-button {
+  text-decoration: none;
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 4px;
+  border: 1px solid #007ecc;
+  background: #fff;
+  color: #007ecc;
+  font-size: 14px;
+  transition: background-color 0.2s, color 0.2s;
+  cursor: pointer;
+}
+
+/* If the card is selected, fill the button with blue */
+.plan-card.selected .plan-button {
+  background: #007ecc;
+  color: #fff;
+}
+
+/* Settings message styling (same as dashboard) */
+.settings-message {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 9999;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.settings-message.success {
+  background-color: #10b981;
+  color: white;
+}
+
+.settings-message.error {
+  background-color: #ef4444;
+  color: white;
+}
+
+.settings-message.hidden {
+  display: none;
+}
+/* add setting page   */
+    .settings-header {
+            padding: 16px;
+            border-bottom: 1px solid #EAECF0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .header-left {
+            width: 320px;
+            /* This gives it a fixed width similar to form-group */
+            flex-shrink: 0;
+            /* Prevents it from shrinking */
+        }
+
+        /* .header-left h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 2px;
+        } */
+
+        .header-left p {
+            font-size: 12px;
+            color: #667085;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Button styles */
+        .btn {
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            border: 1px solid #d1d5db;
+            color: #6b7280;
+        }
+
+        .btn-cancel:hover {
+            background-color: #f9fafb;
+            border-color: #9ca3af;
+        }
+
+        .btn-save {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background-color: #2563eb;
+        }
+
+        /* Content section styles */
+        .content-section {
+            padding: 24px 20px;
+        }
+
+        .section-header {
+            margin-bottom: 0px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .section-subtitle {
+            font-size: 12px;
+            color: #667085;
+        }
+
+        .section-learn {
+            font-size: 12px;
+            color: #1f2937;
+            font-weight: 600;
+        }
+
+        /* Form layout styles */
+        .form-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 24px;
+        }
+
+        .form-grid-security {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 24px;
+            flex: 1;
+        }
+
+        .form-grid-security .form-group:first-child {
+            grid-column: 1 / 2;
+            grid-row: 1 / 2;
+        }
+
+        .form-grid-security .form-group:nth-child(2) {
+            grid-column: 1 / 2;
+            grid-row: 2 / 3;
+        }
+
+        .form-grid-security .form-group:nth-child(3) {
+            grid-column: 1 / 2;
+            grid-row: 3 / 4;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            flex: 1;
+        }
+
+        .security-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+            padding-right: 0;
+        }
+
+        /* Form elements styles */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+                width:  100%;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: white;
+            transition: all 0.2s ease;
+            width: 100%;
+            /* Ensure inputs take full width of their container */
+            box-sizing: border-box;
+            /* Include padding and border in the element's width */
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-select {
+            padding: 8px 12px;
+            border: 1px solid #EAECF0;
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: white;
+            transition: all 0.2s ease;
+             width: 300px !important; /* Fixed 300px width with !important for specificity */
+    min-width: 300px; /* Ensure minimum width */
+    max-width: 300px; /* Ensure maximum width */
+            /* Ensure inputs take full width of their container */
+            box-sizing: border-box;
+            margin-top: 10px;
+            /* Include padding and border in the element's width */
+        }
+        .form-control:read-only {
+            background-color: #F9FAFB;
+            color: #98A2B3;
+            cursor: not-allowed;
+        }
+
+        .form-note {
+            font-size: 14px;
+            color: #98A2B3;
+            margin-top: 6px;
+        }
+
+        .form-note a {
+            color: #344054;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-note a:hover {
+            text-decoration: none;
+        }
+
+
+
+
+
+
+
+
+        /* Responsive Design - Comprehensive Media Queries */
+
+        /* Large screens (laptops and desktops) */
+        @media (max-width: 1200px) {
+
+            /* Adjustments for large screens */
+            .settings-container {
+                max-width: 95%;
+            }
+        }
+
+        /* Medium-sized screens (tablets and small laptops) */
+        @media (max-width: 992px) {
+
+            .form-grid,
+            .form-grid-security {
+                gap: 20px;
+            }
+
+            .form-control {
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .security-actions {
+                padding-right: 10px;
+            }
+        }
+
+        /* Small screens (tablets and large phones) */
+        @media (max-width: 768px) {
+            .settings-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .header-left {
+                width: 100%;
+                /* Full width on smaller screens */
+                margin-bottom: 15px;
+            }
+
+            .header-buttons {
+                margin-top: 12px;
+                justify-content: flex-end;
+                width: 100%;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 16px;
+                width: 100%;
+            }
+
+            .form-grid,
+            .form-grid-security {
+                grid-template-columns: 1fr;
+                /* Single column on mobile */
+                width: 100%;
+            }
+
+            /* Reset the grid positioning on mobile */
+            .form-grid-security .form-group:first-child,
+            .form-grid-security .form-group:nth-child(2),
+            .form-grid-security .form-group:nth-child(3) {
+                grid-column: 1;
+                grid-row: auto;
+            }
+
+            .form-group {
+                width: 100%;
+            }
+
+            .form-control {
+                max-width: 100%;
+                /* Ensure inputs don't overflow */
+            }
+
+            .security-actions {
+                justify-content: center;
+            }
+
+            .btn {
+                min-width: 80px;
+            }
+        }
+
+        /* Extra small screens (mobile phones) */
+        @media (max-width: 576px) {
+            .settings-header {
+                padding: 16px;
+            }
+
+            .content-section {
+                padding: 18px 14px;
+            }
+
+            .header-buttons {
+                flex-direction: column;
+                width: 100%;
+                gap: 8px;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        /* Very small screens (small mobile phones) */
+        @media (max-width: 480px) {
+            .settings-header {
+                padding: 14px 12px;
+            }
+
+            .content-section {
+                padding: 16px 12px;
+            }
+
+            .section-header {
+                margin-bottom: 0px;
+            }
+
+            .form-row {
+                gap: 12px;
+            }
+
+            .form-grid,
+            .form-grid-security {
+                gap: 16px;
+            }
+
+            /* Make sure input fields are fully visible and easier to tap */
+            .form-control {
+                padding: 10px;
+                font-size: 16px;
+                /* Larger font size for better tap targets */
+                height: 40px;
+                /* Taller input fields for easier interaction */
+            }
+
+            .form-label {
+                font-size: 13px;
+                margin-bottom: 6px;
+            }
+
+            .form-note {
+                font-size: 12px;
+            }
+        }
+
+        /* Tiny screens */
+        @media (max-width: 320px) {
+            .settings-header {
+                padding: 12px 10px;
+            }
+
+            .content-section {
+                padding: 14px 10px;
+            }
+
+            .header-left h1 {
+                font-size: 16px;
+            }
+
+            .header-left p {
+                font-size: 13px;
+            }
+
+            .form-control {
+                padding: 8px;
+            }
+        }
+       /* ?Css Subscription Plan */
+      .pricing-plans {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    font-family: 'Inter', sans-serif;
+    margin-left: 30px;
+    max-width: 100%;
+}
+
+.plan-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px;
+    border: 2px solid #e4e7ec;
+    border-radius: 12px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    position: relative;
+    width: 100%;
+    max-width: 1000px;
+    box-sizing: border-box;
+}
+
+.plan-option:hover {
+    border-color: #d0d5dd;
+}
+
+.plan-option.selected {
+    border-color: #1570ef;
+    box-shadow: 0 0 0 2px rgba(21, 112, 239, 0.1);
+}
+
+.plans-icon img {
+    width: 32px;
+    height: 32px;
+    margin-top: 2px;
+}
+
+.plan-details {
+    flex-grow: 1;
+}
+
+.plan-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #101828;
+}
+
+.plan-price {
+    font-size: 16px;
+    font-weight: 500;
+    color: #475467;
+    margin-left: 4px;
+}
+
+.plan-description {
+    font-size: 14px;
+    color: #667085;
+    margin: 4px 0 0;
+    line-height: 20px;
+}
+
+.plan-checkbox {
+    display: flex;
+    align-items: start;
+    justify-content: center;
+    padding-top: 2px;
+}
+
+.plan-checkbox input[type="checkbox"] {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #d0d5dd;
+    border-radius: 50%;
+    position: relative;
+    margin-top: 4px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.plan-option.selected .plan-checkbox input[type="checkbox"] {
+    border-color: #1570ef;
+    background-color: #1570ef;
+}
+
+.plan-checkbox input[type="checkbox"]::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.plan-option.selected .plan-checkbox input[type="checkbox"]::before {
+    opacity: 1;
+}

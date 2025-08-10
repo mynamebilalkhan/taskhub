@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Settings</title>
+    <link rel="stylesheet" href="../css/settings.css" />
+
+    <style>
+        /* Base container styles */
+        /* .settings-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    min-height: 100vh;
+} */
+
+        /* Header section styles */
+        .settings-header {
+            padding: 16px;
+            border-bottom: 1px solid #EAECF0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .header-left {
+            width: 320px;
+            /* This gives it a fixed width similar to form-group */
+            flex-shrink: 0;
+            /* Prevents it from shrinking */
+        }
+
+        /* .header-left h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 2px;
+        } */
+
+        .header-left p {
+            font-size: 12px;
+            color: #667085;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Button styles */
+        .btn {
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        /* Button Wrapper */
+        /* Base styles */
+        .btn1-wrapper {
+            display: flex;
+            justify-content: flex-end;
+            width: 100%;
+            margin-top: 11px;
+            padding-right: 1px;
+        }
+
+        .btn1 {
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            background-color: #1570ef;
+            color: white;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(16, 24, 40, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            width: 400px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 16px;
+            font-size: 20px;
+        }
+
+        .storage-select-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .storage-select-group select {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #d0d5dd;
+            border-radius: 6px;
+        }
+
+        .price {
+            background: #f2f4f7;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn-outline {
+            padding: 8px 16px;
+            border: 1px solid #d0d5dd;
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            padding: 8px 16px;
+            background: #1570ef;
+            border: none;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        /* notification-settings  */
+        .notification-settings {
+            max-width: 720px;
+            padding: 20px 0px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .notification-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .notification-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #1570ef;
+            /* Blue tick like the screenshot */
+            margin-top: 4px;
+            cursor: pointer;
+        }
+
+        .notification-details {
+            flex-grow: 1;
+        }
+
+        .notification-title {
+            display: block;
+            font-weight: 600;
+            color: #101828;
+            margin-bottom: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .notification-description {
+            font-size: 14px;
+            color: #667085;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+
+
+        /* Price Box */
+        .price-box {
+            background: #f2f4f7;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-weight: 500;
+            color: #344054;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        /* Modal Footer */
+        .modal-footer {
+            margin-top: 24px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .cancel-btn {
+            background: #fff;
+            color: #344054;
+            border: 1px solid #d0d5dd;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s ease;
+        }
+
+        .cancel-btn:hover {
+            background: #f9fafb;
+        }
+
+
+        .btn-cancel {
+            background: transparent;
+            border: 1px solid #d1d5db;
+            color: #6b7280;
+        }
+
+        .btn-cancel:hover {
+            background-color: #f9fafb;
+            border-color: #9ca3af;
+        }
+
+        .btn-save {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background-color: #2563eb;
+        }
+
+        /* Content section styles */
+        .content-section {
+            padding: 24px 20px;
+        }
+
+        .section-header {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .section-subtitle {
+            font-size: 12px;
+            color: #667085;
+        }
+
+        .section-learn {
+            font-size: 12px;
+            color: #1f2937;
+            font-weight: 600;
+        }
+
+        /* toggle-switch */
+        /* Toggle Switch Container */
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+        }
+
+        /* Hide native checkbox */
+        .toggle-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        /* The track */
+        .toggle-label {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #d0d5dd;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        /* The knob */
+        .toggle-label::before {
+            content: "";
+            position: absolute;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            top: 3px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            transition: transform 0.3s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* toggle-label1 */
+        /* Checked state */
+        .toggle-input:checked+.toggle-label {
+            background-color: #1570ef;
+        }
+
+        .toggle-input:checked+.toggle-label::before {
+            transform: translateX(20px);
+        }
+
+        /* Form layout styles */
+        .form-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 24px;
+        }
+
+        .form-grid-security {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 24px;
+            flex: 1;
+        }
+
+        .form-grid-security .form-group:first-child {
+            grid-column: 1 / 2;
+            grid-row: 1 / 2;
+        }
+
+        .form-grid-security .form-group:nth-child(2) {
+            grid-column: 1 / 2;
+            grid-row: 2 / 3;
+        }
+
+        .form-grid-security .form-group:nth-child(3) {
+            grid-column: 1 / 2;
+            grid-row: 3 / 4;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            flex: 1;
+            margin-top: 30px;
+        }
+
+        .security-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+            padding-right: 0;
+        }
+
+        /* Form elements styles */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: white;
+            transition: all 0.2s ease;
+            width: 100%;
+            /* Ensure inputs take full width of their container */
+            box-sizing: border-box;
+            /* Include padding and border in the element's width */
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-select {
+            padding: 8px 12px;
+            border: 1px solid #EAECF0;
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: white;
+            transition: all 0.2s ease;
+            width: 100%;
+            /* Ensure inputs take full width of their container */
+            box-sizing: border-box;
+            /* Include padding and border in the element's width */
+        }
+
+        .form-control:read-only {
+            background-color: #F9FAFB;
+            color: #98A2B3;
+            cursor: not-allowed;
+        }
+
+        .form-note {
+            font-size: 14px;
+            color: #98A2B3;
+            margin-top: 6px;
+        }
+
+        .form-note a {
+            color: #344054;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-note a:hover {
+            text-decoration: none;
+        }
+
+
+
+
+
+
+
+
+        /* Responsive Design - Comprehensive Media Queries */
+
+        /* Large screens (laptops and desktops) */
+        @media (max-width: 1200px) {
+
+            /* Adjustments for large screens */
+            .settings-container {
+                max-width: 95%;
+            }
+        }
+
+        /* Medium-sized screens (tablets and small laptops) */
+        @media (max-width: 992px) {
+
+            .form-grid,
+            .form-grid-security {
+                gap: 20px;
+            }
+
+            .form-control {
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .security-actions {
+                padding-right: 10px;
+            }
+        }
+
+        /* Small screens (tablets and large phones) */
+        @media (max-width: 768px) {
+            .settings-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .header-left {
+                width: 100%;
+                /* Full width on smaller screens */
+                margin-bottom: 15px;
+            }
+
+            .header-buttons {
+                margin-top: 12px;
+                justify-content: flex-end;
+                width: 100%;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 16px;
+                width: 100%;
+            }
+
+            .form-grid,
+            .form-grid-security {
+                grid-template-columns: 1fr;
+                /* Single column on mobile */
+                width: 100%;
+            }
+
+            /* Reset the grid positioning on mobile */
+            .form-grid-security .form-group:first-child,
+            .form-grid-security .form-group:nth-child(2),
+            .form-grid-security .form-group:nth-child(3) {
+                grid-column: 1;
+                grid-row: auto;
+            }
+
+            .form-group {
+                width: 100%;
+            }
+
+            .form-control {
+                max-width: 100%;
+                /* Ensure inputs don't overflow */
+            }
+
+            .security-actions {
+                justify-content: center;
+            }
+
+            .btn {
+                min-width: 80px;
+            }
+        }
+
+        /* Extra small screens (mobile phones) */
+        @media (max-width: 576px) {
+            .settings-header {
+                padding: 16px;
+            }
+
+            .content-section {
+                padding: 18px 14px;
+            }
+
+            .header-buttons {
+                flex-direction: column;
+                width: 100%;
+                gap: 8px;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        /* Very small screens (small mobile phones) */
+        @media (max-width: 480px) {
+            .settings-header {
+                padding: 14px 12px;
+            }
+
+            .content-section {
+                padding: 16px 12px;
+            }
+
+            .section-header {
+                margin-bottom: 16px;
+            }
+
+            .form-row {
+                gap: 12px;
+            }
+
+            .form-grid,
+            .form-grid-security {
+                gap: 16px;
+            }
+
+            /* Make sure input fields are fully visible and easier to tap */
+            .form-control {
+                padding: 10px;
+                font-size: 16px;
+                /* Larger font size for better tap targets */
+                height: 40px;
+                /* Taller input fields for easier interaction */
+            }
+
+            .form-label {
+                font-size: 13px;
+                margin-bottom: 6px;
+            }
+
+            .form-note {
+                font-size: 12px;
+            }
+        }
+
+        /* Tiny screens */
+        @media (max-width: 320px) {
+            .settings-header {
+                padding: 12px 10px;
+            }
+
+            .content-section {
+                padding: 14px 10px;
+            }
+
+            .header-left h1 {
+                font-size: 16px;
+            }
+
+            .header-left p {
+                font-size: 13px;
+            }
+
+            .form-control {
+                padding: 8px;
+            }
+        }
+
+        .appearance-row {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-container settings-container">
+        <aside class="file-navigation">
+            <div class="search-bar">
+                <input type="text" placeholder="Search" />
+            </div>
+            <div class="folder-tree-container">
+                <ul class="folder-tree">
+                    <li class="settings-menu-item active" data-panel="account">
+                        <img src="../assets/images/user-01.svg" class="submenu-icon"> Account
+                    </li>
+                    <li class="settings-menu-item" data-panel="subscription">
+                        <img src="../assets/images/credit-card-02.svg" class="submenu-icon"> Subscription
+                    </li>
+                    <li class="settings-menu-item" data-panel="storage">
+                        <img src="../assets/images/cloud.svg" class="submenu-icon"> Storage
+                    </li>
+                    <li class="settings-menu-item" data-panel="notifications">
+                        <img src="../assets/images/bell-ringing-04.svg" class="submenu-icon"> Notifications
+                    </li>
+                    <li class="settings-menu-item" data-panel="appearance">
+                        <img src="../assets/images/moon-01.svg" class="submenu-icon"> Appearance
+                    </li>
+                </ul>
+            </div>
+            <!-- <div class="file-navigation-footer">
+                
+                <img src="../assets/images/icon-delete.svg" class="footer-icon" />
+                <img src="../assets/images/icon-share.svg" class="footer-icon" />
+                <img src="../assets/images/icon-add-folder.svg" class="footer-icon" />
+                <img src="../assets/images/icon-add-file.svg" class="footer-icon" />
+                <img src="../assets/images/icon-file-up.svg" class="footer-icon" />
+                <img src="../assets/images/icon-flip-backward.svg" class="footer-icon" />
+                <img src="../assets/images/icon-flip-forward.svg" class="footer-icon" />
+            </div> -->
+        </aside>
+
+        <section class="page-content">
+            <div class="settings-panels-wrapper">
+                <!-- <h1 class="settings-title">Settings</h1>
+                <div class="settings-subtitle">Manage and update your account info.</div> -->
+                <div class="settings-header">
+                    <div class="header-left">
+                        <h1 class="settings-title">Settings</h1>
+                        <div class="settings-subtitle">Manage and update your account info.</div>
+                    </div>
+                    <div class="header-buttons">
+                        <button class="btn btn-cancel" onclick="cancelSettings()">Cancel</button>
+                        <button class="btn btn-save" onclick="saveSettings()">Save</button>
+                        <button class="btn btn-save" onclick="window.logout()">Logout</button>
+                    </div>
+                </div>
+                <div class="content-section settings-panel" id="panel-account">
+                    <!-- General Section -->
+                    <div class="form-row">
+                        <div class="header-left">
+                            <h2 class="section-title">General</h2>
+                            <p class="section-subtitle">Update your account settings.</p>
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="username" value="john_doe_12" readonly>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" value="johndoe123@gmail.com"
+                                    readonly>
+                                <div class="form-note">To change your email, please <a href="#"
+                                        onclick="contactUs()">contact us.</a></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row" style="margin-top: 40px; padding-top: 40px; border-top: 1px solid #e5e7eb;">
+                        <div class="header-left">
+                            <h2 class="section-title">Security</h2>
+                            <p class="section-subtitle">Update your password.</p>
+                        </div>
+
+                        <div class="form-grid-security">
+                            <div class="form-group">
+                                <label for="current-password" class="form-label">Current password</label>
+                                <input type="password" class="form-control" id="current-password"
+                                    placeholder="••••••••">
+                                <div id="current-password-error" class="error-message"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="new-password" class="form-label">New password</label>
+                                <input type="password" class="form-control" id="new-password" placeholder="••••••••">
+                                <div class="form-note">Your new password must be more than 8 characters.</div>
+                                <div id="new-password-error" class="error-message"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="confirm-password" class="form-label">Confirm new password</label>
+                                <input type="password" class="form-control" id="confirm-password"
+                                    placeholder="••••••••">
+                                <div id="confirm-password-error" class="error-message"></div>
+                            </div>
+                        </div>
+                        <div id="debug-msg"></div>
+                    </div>
+
+                    <!-- Security Action Buttons -->
+                    <div class="security-actions">
+                        <button class="btn btn-cancel">Cancel</button>
+                        <button class="btn btn-save" id="update-password-button">Update password</button>
+                    </div>
+                    <div class="form-row" style="margin-top: 40px; padding-top: 40px; border-top: 1px solid #e5e7eb;">
+                        <div class="header-left">
+                            <h2 class="section-title">Storage</h2>
+                            <p class="section-subtitle">Your Storage Details.</p>
+                        </div>
+
+                        <div class="form-grid-security">
+                            <div class="storage-section">
+                                <h3>Storage</h3>
+                                <div class="used-info">Used: 512 GB / 1 TB</div>
+                                <div class="storage-progress-container">
+                                    <div class="storage-progress" style="width:51.2%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- "Account" panel -->
+                <div class="settings-panel" id="panel-account">
+                    <!-- o365 Integration card -->
+                    <div class="settings-card">
+                        <h3>o365 Integration</h3>
+                        <p>Connect your Office 365 account to sync calendar and email features.</p>
+                        <div id="o365-message" class="o365-message"></div>
+                        <button class="connect-o365-btn">Connect</button>
+                        <div class="form-group">
+                            <label>Azure Username</label>
+                            <input type="text" value="" />
+                        </div>
+                        <!--
+                        <div class="form-group">
+                            <label>Application ID</label>
+                            <input type="text" value="" />
+                        </div>
+                        <div class="form-group">
+                            <label>Tenant ID</label>
+                            <input type="text" value="" />
+                        </div>
+                        <div class="form-group">
+                            <label>Client Secret</label>
+                            <input type="text" value="" />
+                        </div>
+                        -->
+                    </div>
+
+                    <div class="settings-card">
+                        <h3>General</h3>
+                        <p>Update your account settings.</p>
+                        <button class="save-btn">Save</button>
+
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" value="john_doe_12" />
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" value="johndoe123@gmail.com" />
+                            <div class="note">To change your email, please <a href="#">contact us.</a></div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3>Security</h3>
+                        <p>Update your password.</p>
+                        <button class="reset-btn">Reset</button>
+
+                        <div class="form-group">
+                            <label>Current Password*</label>
+                            <input type="password" placeholder="Current Password" />
+                        </div>
+                        <div class="form-group">
+                            <label>New Password*</label>
+                            <input type="password" placeholder="New Password" />
+                        </div>
+                        <div class="form-group">
+                            <label>Re-enter New Password*</label>
+                            <input type="password" placeholder="Re-enter New Password" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- "Subscription" panel -->
+                <div class="content-section settings-panel hidden" id="panel-subscription">
+                    <div class="form-row">
+                        <div class="header-left">
+                            <h2 class="section-title">Subscription Plan</h2>
+                            <p class="section-subtitle">Manage and update your account info. You are currently using
+                                free version of this app.</p>
+                            <a class="section-learn">Learn More.</a>
+                        </div>
+
+                        <!-- <div class="form-grid"> -->
+                        <!-- Pricing Plans Section -->
+                        <div class="pricing-plans">
+                            <!-- Basic Plan -->
+                            <label class="plan-option selected">
+                                <div class="plans-icon">
+                                    <img src="../assets/images/Featured-icon.svg">
+                                </div>
+                                <div class="plan-details">
+                                    <span class="plan-name">Basic plan </span><span class="plan-price">$0+</span>
+                                    <p class="plan-description">Ideal for individuals to automate workflows and
+                                        accelerate delivery.</p>
+                                </div>
+                                <div class="plan-checkbox">
+                                    <input type="checkbox" name="plan" id="basic-plan" checked>
+                                </div>
+                            </label>
+
+                            <!-- Collaboration Plan -->
+                            <label class="plan-option">
+                                <div class="plans-icon">
+                                    <img src="../assets/images/Featured-icon-1.svg">
+                                </div>
+                                <div class="plan-details">
+                                    <span class="plan-name">Collaboration plan </span><span
+                                        class="plan-price">$5+</span>
+                                    <p class="plan-description">Best for small teams looking to optimize data flows and
+                                        scale their operations.</p>
+                                </div>
+                                <div class="plan-checkbox">
+                                    <input type="checkbox" name="plan" id="collaboration-plan">
+                                </div>
+                            </label>
+
+                            <!-- Enterprise Plan -->
+                            <label class="plan-option">
+                                <div class="plans-icon">
+                                    <img src="../assets/images/Featured-icon-2.svg">
+                                </div>
+                                <div class="plan-details">
+                                    <span class="plan-name">Enterprise plan </span><span class="plan-price">$99+</span>
+                                    <p class="plan-description">Best for small teams looking to optimize data flows and
+                                        scale their operations.</p>
+                                </div>
+                                <div class="plan-checkbox">
+                                    <input type="checkbox" name="plan" id="enterprise-plan">
+                                </div>
+                            </label>
+                        </div>
+                        <!-- </div> -->
+                    </div>
+                </div>
+                <div class="settings-panel hidden" id="panel-subscription">
+                    <div class="settings-card">
+                        <h3>Subscription</h3>
+                        <p>Manage your subscription plan here.</p>
+                    </div>
+
+                    <h1 class="settings-title">Choose a Plan</h1>
+                    <div class="settings-subtitle">Manage and update your account info.</div>
+
+                    <div class="plan-grid">
+                        <!-- Plan Card 1 (Core) -->
+                        <div class="plan-card">
+                            <div class="plan-header">
+                                <div class="plan-icon">◉</div>
+                                <div>
+                                    <h2 class="plan-title">Core</h2>
+                                    <div class="plan-subtitle">For Freelancers &amp; Consultants</div>
+                                </div>
+                            </div>
+                            <div class="plan-description">
+                                Ideal for individuals looking to automate their workflows and bring projects to
+                                production faster.
+                            </div>
+                            <p class="price">$0 <span>/month</span></p>
+                            <div class="features-title">What’s included:</div>
+                            <ul class="features-list">
+                                <li>Unique selling point</li>
+                                <li>Unique selling point</li>
+                                <li>Unique selling point</li>
+                                <li>Unique selling point</li>
+                                <li>Unique selling point</li>
+                            </ul>
+                            <a class="plan-button" href="#">Current Plan</a>
+                        </div>
+
+                        <!-- Plan Card 2 (Collaboration) -->
+                        <div class="plan-card">
+                            <div class="plan-header">
+                                <div class="plan-icon">◉</div>
+                                <div>
+                                    <h2 class="plan-title">Collaboration</h2>
+                                    <div class="plan-subtitle">For small teams &amp; data science cells</div>
+                                </div>
+                            </div>
+                            <div class="plan-description">
+                                Best for small teams looking to optimize data flows and scale their operations.
+                            </div>
+                            <p class="price">$5 <span>/month</span></p>
+                            <div class="features-title">What’s included:</div>
+                            <ul class="features-list">
+                                <li>Unique selling point</li>
+                                <li>Unique selling point</li>
+                                <li>Unique selling point</li>
+                                <li>Unique selling point</li>
+                                <li>Unique selling point</li>
+                                <li>Unique selling point</li>
+                            </ul>
+                            <a class="plan-button" href="#">Upgrade to Pro Plan</a>
+                        </div>
+
+                        <!-- Plan Card 3 (Black Label) -->
+                        <div class="plan-card">
+                            <div class="plan-header">
+                                <div class="plan-icon">◉</div>
+                                <div>
+                                    <h2 class="plan-title">Black Label</h2>
+                                    <div class="plan-subtitle">For small teams &amp; data science cells</div>
+                                </div>
+                            </div>
+                            <div class="plan-description">
+                                Best for teams looking to optimize data flows and scale operations. Options starting
+                                from
+                            </div>
+                            <p class="price">$80 <span>/month</span></p>
+                            <div class="features-title">What’s included:</div>
+                            <ul class="features-list">
+                                <li>Unique selling point</li>
+                                <li>Unique selling point</li>
+                                <li>Unique selling point</li>
+                                <li>Unique selling point</li>
+                                <li>Unique selling point</li>
+                            </ul>
+                            <a class="plan-button" href="#">Upgrade to Business Plan</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- "Notifications" panel -->
+                <div class="content-section settings-panel hidden" id="panel-notifications">
+                    <div class="form-row">
+                        <div class="header-left">
+                            <h2 class="section-title">Notifications</h2>
+                            <p class="section-subtitle">Customize your email notifications and never miss an update.</p>
+                        </div>
+                        <div class="notification-settings">
+                            <div class="notification-row">
+                                <div class="notification-checkbox">
+                                    <input type="checkbox" id="new-content-announcements" checked>
+                                </div>
+                                <div class="notification-details">
+                                    <label for="new-content-announcements" class="notification-title">New Content
+                                        Announcements</label>
+                                    <p class="notification-description">Get latest updates on new content releases and
+                                        features.</p>
+                                </div>
+                            </div>
+                            <div class="notification-row">
+                                <div class="notification-checkbox">
+                                    <input type="checkbox" id="weekly-summary" checked>
+                                </div>
+                                <div class="notification-details">
+                                    <label for="weekly-summary" class="notification-title">Weekly Summary</label>
+                                    <p class="notification-description">Keep track of your work progress and receive a
+                                        detailed weekly report.</p>
+                                </div>
+                            </div>
+                            <div class="notification-row">
+                                <div class="notification-checkbox">
+                                    <input type="checkbox" id="new-job-updates" checked>
+                                </div>
+                                <div class="notification-details">
+                                    <label for="new-job-updates" class="notification-title">New Job Updates</label>
+                                    <p class="notification-description">New job and career postings delivered weekly,
+                                        right to your inbox.</p>
+                                </div>
+                            </div>
+                            <div class="notification-row">
+                                <div class="notification-checkbox">
+                                    <input type="checkbox" id="community-events" checked>
+                                </div>
+                                <div class="notification-details">
+                                    <label for="community-events" class="notification-title">Community Events</label>
+                                    <p class="notification-description">Keep up to date with the latest live design
+                                        events from the Uizard community.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row" style="margin-top: 40px; padding-top: 40px; border-top: 1px solid #e5e7eb;">
+                        <div class="header-left">
+                            <h2 class="section-title">Unsubscribe from everything</h2>
+                            <p class="section-subtitle">We’ll continue to only send necessary emails about your account.
+                            </p>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="unsubscribe-toggle" class="toggle-input">
+                            <label for="unsubscribe-toggle" class="toggle-label"></label>
+                        </div>
+                    </div>
+                </div>
+                <!-- <div class="settings-panel hidden" id="panel-notifications">
+                    <div class="settings-card">
+                        <h3>Notifications</h3>
+                        <p>Manage your notification preferences.</p>
+                    </div>
+                </div> -->
+
+                <!-- "Appearance" panel -->
+                <div class="content-section settings-panel hidden" id="panel-appearance">
+                    <div class="form-row">
+                        <div class="header-left">
+                            <h2 class="section-title">Appearance</h2>
+                            <p class="section-subtitle">Customize your layout.</p>
+                        </div>
+                        <div class="appearance-settings">
+                            <div class="appearance-row">
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="appearance-toggle" class="toggle-input">
+                                    <label for="appearance-toggle" class="toggle-label"></label>
+                                </div>
+                                <div class="appearance-details">
+                                    <label for="weekly-summary" class="appearance-title">Dark Mode</label>
+                                </div>
+                            </div>
+                            <div class="appearance-row">
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="current-password" class="form-label">Font</label>
+                                        <select class="form-select" id="current-password">
+                                            <option value="inter">Inter</option>
+                                            <option value="sf-pro">SF Pro</option>
+                                            <option value="helvetica">Helvetica</option>
+                                            <option value="arial">Arial</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- <div class="settings-panel hidden" id="panel-appearance">
+                    <div class="settings-card">
+                        <h3>Appearance</h3>
+                        <p>Customize the look and feel of the app.</p>
+                    </div>
+                </div> -->
+                <!-- "Storage" panel -->
+                <div class="content-section settings-panel" id="panel-storage">
+                    <div class="form-row">
+                        <div class="header-left">
+                            <h2 class="section-title">Storage</h2>
+                            <p class="section-subtitle">Your Storage Details.</p>
+                        </div>
+                        <div class="form-grid">
+                            <div class="storage-section">
+                                <h3>Storage</h3>
+                                <div class="used-info">Used: 512 GB / 1 TB</div>
+                                <div class="storage-progress-container">
+                                    <div class="storage-progress" style="width:51.2%;"></div>
+                                </div>
+                                <div class="btn1-wrapper">
+                                    <button class="btn1 btn-save upgrade-storage-btn" id="open-upgrade-storage">Upgrade
+                                        storage</button>
+                                </div>
+                            </div>
+
+                            <!-- Modal -->
+
+                            <div class="modal-overlay" id="upgradeModal">
+                                <div class="modal-content">
+                                    <button class="close-btn" onclick="closeModal()">×</button>
+                                    <h2>Upgrade Storage</h2>
+
+                                    <label for="storage">Storage</label>
+                                    <div class="storage-select-group">
+                                        <select id="storage" onchange="updatePrice()">
+                                            <option value="">Select</option>
+                                            <option value="50GB">50GB</option>
+                                            <option value="100GB">100GB</option>
+                                            <option value="250GB">250GB</option>
+                                            <option value="500GB">500GB</option>
+                                            <option value="1TB">1TB</option>
+                                            <option value="2TB">2TB</option>
+                                            <option value="5TB">5TB</option>
+                                            <option value="10TB">10TB</option>
+                                        </select>
+                                        <span class="price" id="price">$0</span>
+                                    </div>
+
+                                    <div class="modal-buttons">
+                                        <button class="btn-outline" onclick="closeModal()">Cancel</button>
+                                        <button class="btn-primary" onclick="upgrade()">Upgrade</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Storage Section (common) -->
+                <!-- <div class="storage-section">
+                <h3>Storage</h3>
+                <div class="used-info">Used: 32 GB / 1 TB</div>
+                <div class="storage-progress-container">
+                    <div class="storage-progress" style="width:3.2%;"></div>
+                </div>
+            </div> -->
+        </section>
+    </div><!-- end .page-container -->
+
+    <!-- JS (module) -->
+    <!-- <script type="module" src="../js/settings.js"></script>
+    <script type="module" src="../js/changepassword.js" defer></script>
+    <script>
+        function openModal() {
+            const upgradeModal = document.getElementById("upgradeModal");
+            upgradeModal.classList.toggle("show");
+        }
+
+        function closeModal() {
+            document.getElementById('upgradeModal').style.display = 'none';
+        }
+
+    </script> -->
+</body>
+
+</html>
+
+
+</div>
+</div>
+</div>

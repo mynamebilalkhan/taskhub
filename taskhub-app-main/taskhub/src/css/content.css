@@ -1,0 +1,376 @@
+.page-container {
+    display: flex;
+    height: 100vh;
+    position: relative;
+}
+
+.file-navigation {
+    width: 260px;
+    padding: 0px;
+    background-color: #ffffff;
+    border-right: 1px solid #e0e4e8;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 999;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 10px 30px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    /* margin-bottom: 15px; */
+    box-shadow: 0px 1px 2px 0px #1018280D;
+    height: 28px;
+    font-size: 14px;
+    font-weight: 400;
+}
+.search-bar img {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 16px;
+    height: 16px;
+    /* opacity: 0.6; */
+    z-index: 1;
+    pointer-events: none; /* Allows clicking through the icon to focus the input */
+}
+
+.navigation-title {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+
+
+.folder-tree li.active {
+    background-color: #e6f0fc;
+    color: #0053d6;
+    border-radius: 4px;
+}
+
+.tree-icon {
+    width: 16px;
+    height: 16px;
+}
+.file-navigation-footer {
+    position: relative;
+    padding-top: 8px;
+    border-top: 1px solid #e0e4e8;
+    /* background-color: #ffffff; */
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.footer-icon {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.footer-icon:hover {
+    opacity: 1;
+}
+
+.page-content {
+    padding: 20px;
+    position: relative;
+    overflow-y: auto;
+    overflow-x: auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.card-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.add-column, .settings-btn, .options-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #0053d6;
+    font-size: 14px;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th, .data-table td {
+    text-align: left;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+@media (max-width: 800px) {
+    .file-navigation {
+        width: 200px;
+        padding-bottom: 20px;
+    }
+
+    .file-navigation-footer {
+        flex-wrap: wrap;
+        padding-top: 5px;
+    }
+
+    .footer-icon {
+        width: 18px;
+        height: 18px;
+        margin: 3px;
+    }
+
+    .data-table th, .data-table td {
+        padding: 5px;
+        font-size: 12px;
+    }
+
+    .card-header h3 {
+        font-size: 16px;
+    }
+}
+
+/* Popravka za problem sa ugnježđenim listama */
+.folder-tree ul {
+    display: block;
+    padding-left: 11px;  /* precizno uvlačenje u novi nivo */
+    margin-left: 0 ;
+}
+
+/* Obezbeđujemo da li elementi imaju fleks prikaz, ali ne i njihove pod-liste */
+.folder-tree li {
+    
+    align-items: flex-start !important;
+    padding: 6px 6px 6px 15px !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
+    font-size: 14px;
+}
+
+/* Specifično ciljamo direktan sadržaj unutar li da bude flex poravnat horizontalno */
+.folder-tree li > .tree-icon,
+.folder-tree li > span {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+/* Poseban span za tekst, kako bi ikonica i tekst bili poravnati zajedno */
+.folder-tree li span {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.folder-tree span {
+    position: relative; /* potrebno za pozicioniranje tooltipa */
+}
+.file-navigation {
+    z-index: 999; /* Visok z-index za roditeljski element */
+}
+
+.folder-tree span:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: 100%; 
+    left: 0;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000; 
+    opacity: 1;
+    transform: translateY(4px);
+}
+
+.folder-tree-container {
+    overflow-y: auto;
+    overflow-x: auto;
+    flex-grow: 1; 
+    white-space: nowrap;
+    padding-bottom: 20px; 
+}
+
+.folder-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.arrow-icon {
+    width: 14px;
+    height: 14px;
+    transition: transform 0.2s ease;
+}
+
+
+.content-header h2 {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+.breadcrumb {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+
+.expand-toggle {
+    cursor: pointer;
+    margin-right: 6px;
+}
+
+.expandable-row.expanded .expand-toggle {
+    transform: rotate(180deg);
+}
+
+.expanded-content {
+    background-color: #ffffff;
+}
+
+.add-row {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.fab {
+    position: fixed;
+    bottom: 50px;
+    right: 30px;
+    width: 39px;
+    height: 39px;
+    background-color: #0086C9;
+    color: #fff;
+    border: none;
+    border-radius: 44px;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 1000;
+}
+
+.inner-tabs-container {
+    width: 100%;
+    border-bottom: 1px solid #e0e4e8;
+    margin-bottom: 15px;
+    overflow-x: auto;
+}
+
+.inner-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+}
+
+.inner-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid #e0e4e8;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    background-color: #ffffff;
+    white-space: nowrap;
+}
+
+.inner-tab.active {
+    background-color: #e6f0fc;
+    color: #0053d6;
+    font-weight: 500;
+    border-bottom-color: transparent;
+}
+
+.close-tab {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 16px;
+    color: #888;
+}
+
+.close-tab:hover {
+    color: #333;
+}
+
+.add-inner-tab {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #333;
+    padding: 0 8px;
+    line-height: 16px;
+}
+
+.task-table-wrapper {
+    overflow-x: auto;
+    margin-top: 0px;
+}
+
+.task-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    background-color: white;
+}
+
+.task-table th, .task-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.task-table th {
+    font-weight: 600;
+    color: #555;
+    background-color: #f9f9f9;
+}
+
+.add-task-btn {
+    padding: 12px 24px 12px 40px;
+    border-bottom: 1px solid #EAECF0;
+    border-top: 1px solid #EAECF0
+}
+
+.add-task-btn button {
+    background: none;
+    border: none;
+    color: #007bff;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.add-task-btn button:hover {
+    text-decoration: underline;
+}

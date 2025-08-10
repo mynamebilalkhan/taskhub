@@ -1,0 +1,84 @@
+.sidebar {
+    width: 40px; /* uže jer nema teksta */
+    background-color: #fff;
+    border-right: 1px solid #e0e4e8;
+    display: flex;
+    flex-direction: column;
+}
+
+.logo-container {
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+.logo-container img {
+    width: 28px;
+    height: 28px;
+}
+
+.menu {
+    flex-grow: 1;
+    list-style: none;
+    /* margin-top: 20px; */
+}
+
+.menu li {
+    padding: 12px 0;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.menu li.active,
+.menu li:hover {
+    background-color: #f0f4f9;
+}
+
+.menu-icon {
+    width: 20px;
+    height: 20px;
+}
+/* ================ */
+
+
+
+.sidebar-footer {
+    padding: 10px 5px;
+    border-top: 1px solid #e0e4e8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.sidebar .menu li {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 40px;
+    width: 40px;
+    cursor: pointer;
+    /* margin: 4px 0; */
+  }
+  
+  .sidebar .menu li.active {
+    background-color: #E0F1FE; /* svetloplava */
+  }
+  
+  .sidebar .menu li.active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top:0;
+    bottom: 0;
+    width: 4px;
+    background-color: #007ECC; /* plava traka */
+  }
+
+  /* --------------------- */
+
+
+  

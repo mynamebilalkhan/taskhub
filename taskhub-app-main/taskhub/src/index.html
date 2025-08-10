@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - TaskHub</title>
+  <script type="module" src="/main.js" defer></script>
+</head>
+
+<body>
+  <div class="container">
+    <!-- Logo -->
+    <div class="logo">
+      <img src="assets/logo.png" alt="Logo" />
+    </div>
+
+    <!-- Main heading & subheading -->
+    <h1 class="main-heading">Log in to your account</h1>
+    <p class="subheading">Welcome back! Please enter your details.</p>
+
+    <!-- Debug / error messages -->
+    <p id="debug-msg"></p>
+
+    <!-- Sign-in form -->
+    <div id="signin-form" class="auth-form">
+      <label for="signin-username" class="label">Username / Email Address</label>
+      <input type="text" id="signin-username" placeholder="Enter username or email" required />
+
+      <label for="signin-password" class="label">Password</label>
+      <input type="password" id="signin-password" placeholder="Enter your password" required />
+
+      <div class="options-row">
+        <div class="checkbox-container">
+          <input type="checkbox" id="stay-logged-in" class="stay-logged"/>
+          <label for="stay-logged-in">Stay logged in</label>
+        </div>
+        <div class="forgot-password">
+          <a href="forgotpassword.html">Forgot password</a>
+        </div>
+      </div>
+
+      <button id="signin-button" class="btn-primary">Sign In</button>
+
+      <!-- Social sign-in buttons -->
+      <div class="social-login">
+        <button class="social-btn google-btn">
+          <img src="assets/google-icon.png" alt="Google icon" class="social-icon" />
+          Sign in with Google
+        </button>
+        <button class="social-btn apple-btn">
+          <img src="assets/apple-icon.png" alt="Apple icon" class="social-icon" />
+          Sign in with Apple
+        </button>
+        <button class="social-btn outlook-btn">
+          <img src="assets/outlook-icon.png" alt="Outlook icon" class="social-icon" />
+          Sign in with Outlook
+        </button>
+      </div>
+
+      <div class="signup-cta">
+        <p>
+          Don’t have an account?
+          <!-- Link to signup.html instead of toggling in the same page -->
+          <a href="signup.html" class="link-button">Sign up</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

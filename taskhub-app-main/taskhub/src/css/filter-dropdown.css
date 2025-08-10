@@ -1,0 +1,28 @@
+.filter-dropdown {
+    position: absolute;
+    top: 40px;
+    right: 10px;
+    background-color: #f9f9f9;
+    min-width: 165px;
+    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    border-radius: 5px;
+    display: none;
+    font-size: 13px;
+    margin: 0px 17px 11px 0px;
+}
+
+.filter-dropdown a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.filter-dropdown a:hover {
+    background-color: #ddd;
+}
+
+.show {
+    display: block;
+}
