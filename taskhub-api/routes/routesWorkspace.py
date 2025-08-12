@@ -160,6 +160,45 @@ class WorkspacesFromCard(Resource):
             workspaceNameSpace.abort(404, "No workspaces found for this card")
         
         return workspace.serialize()
+
+@workspaceNameSpace.route('/Vault/<int:vault_id>')
+@workspaceNameSpace.response(404, 'No workspaces found for this vault')
+@workspaceNameSpace.param('vault_id', 'The vault identifier')
+class WorkspacesByVault(Resource):
+    @workspaceNameSpace.doc('GetWorkspacesByVault')
+    @workspaceNameSpace.marshal_list_with(WorkspaceModel)
+    def get(self, vault_id):
+        """Get all workspaces that belong to a specific vault"""
+        # Get all folders in the vault
+        from models import Folder
+        folders = Folder.query.filter_by(VaultId=vault_id).all()
+        folder_ids = [folder.Id for folder in folders]
+        
+        # Get all workspaces in those folders
+        workspaces = Workspace.query.filter(Workspace.FolderId.in_(folder_ids)).all()
+        
+        return [workspace.serialize() for workspace in workspaces]
+
+@workspaceNameSpace.route('/Vault/<int:vault_id>/FromTask')
+@workspaceNameSpace.response(404, 'No workspaces found for this vault')
+@workspaceNameSpace.param('vault_id', 'The vault identifier')
+class WorkspacesByVaultFromTask(Resource):
+    @workspaceNameSpace.doc('GetWorkspacesByVaultCreatedFromTask')
+    @workspaceNameSpace.marshal_list_with(WorkspaceModel)
+    def get(self, vault_id):
+        """Get all workspaces that belong to a specific vault and were created from a task"""
+        # Get all folders in the vault
+        from models import Folder
+        folders = Folder.query.filter_by(VaultId=vault_id).all()
+        folder_ids = [folder.Id for folder in folders]
+        
+        # Get all workspaces in those folders that were created from a task
+        workspaces = Workspace.query.filter(
+            Workspace.FolderId.in_(folder_ids),
+            Workspace.CreatedFromTask == True
+        ).all()
+        
+        return [workspace.serialize() for workspace in workspaces]
 # Register resources
 workspaceNameSpace.add_resource(Workspaces, '/')
 workspaceNameSpace.add_resource(WorkspaceResource, '/<int:id>')
@@ -167,6 +206,8 @@ workspaceNameSpace.add_resource(WorkspacesByCompany, '/Company/<int:companyId>')
 workspaceNameSpace.add_resource(WorkspacesNotFromTask, '/NotFromTask')
 workspaceNameSpace.add_resource(WorkspacesFromTask, '/FromTask/<int:task_id>')
 workspaceNameSpace.add_resource(WorkspacesFromCard, '/FromCard/<int:card_id>')
+workspaceNameSpace.add_resource(WorkspacesByVault, '/Vault/<int:vault_id>')
+workspaceNameSpace.add_resource(WorkspacesByVaultFromTask, '/Vault/<int:vault_id>/FromTask')
 
 api.add_namespace(workspaceNameSpace)
 

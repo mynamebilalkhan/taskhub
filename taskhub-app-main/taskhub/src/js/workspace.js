@@ -59,6 +59,48 @@ function setupTaskListenersIndependently(page, container) {
           const created = await window.__TAURI__.core.invoke("create_task_for_page", payload);
           console.log('✅ Task created successfully:', created, 'for page:', page.name);
           
+          // Debug the task creation response
+          console.log('Task created response:', created);
+          console.log('Task created response keys:', Object.keys(created));
+          console.log('Task created response vaultId:', created.vaultId);
+          console.log('refreshDashboardReferences function available:', typeof window.refreshDashboardReferences);
+          
+          // Always try to refresh references when a task is created
+          console.log('Task created, attempting to refresh references...');
+          
+          // Check if a workspace was created for this task
+          try {
+            const taskId = created.id;
+            console.log('Checking if workspace was created for task ID:', taskId);
+            const workspaceForTask = await window.__TAURI__.core.invoke("fetch_workspaces_for_task", { taskId: taskId });
+            console.log('Workspace for task:', workspaceForTask);
+          } catch (error) {
+            console.log('No workspace found for task or error:', error);
+          }
+          
+          if (window.refreshDashboardReferences) {
+            console.log('Calling refreshDashboardReferences function');
+            window.refreshDashboardReferences();
+          } else {
+            console.warn('refreshDashboardReferences function not available, trying event dispatch');
+            // Fallback to event dispatch
+            if (created.vaultId) {
+              console.log('Workspace created for task, dispatching event for vault:', created.vaultId);
+              const event = new CustomEvent('workspaceCreated', {
+                detail: { vaultId: created.vaultId }
+              });
+              console.log('Dispatching event:', event);
+              window.dispatchEvent(event);
+            } else {
+              console.warn('No vaultId in created task response, but workspace was created. Refreshing references anyway.');
+              const event = new CustomEvent('workspaceCreated', {
+                detail: { vaultId: null }
+              });
+              console.log('Dispatching event with null vaultId:', event);
+              window.dispatchEvent(event);
+            }
+          }
+          
           // Reload page data if function is available
           if (window.reloadCurrentPageData) {
             await window.reloadCurrentPageData();

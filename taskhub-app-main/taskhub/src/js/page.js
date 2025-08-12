@@ -195,19 +195,50 @@ export async function init(page, container) {
             refreshTaskForm();
             showMessage(`Task created successfully for ${page.name}`, 'success');
             
+            // Check if a workspace was created for this task
+            try {
+              const taskId = created.id; 
+              const workspaceForTask = await invoke("fetch_workspaces_for_task", { taskId: taskId });
+            } catch (error) {
+              console.log('No workspace found for task or error:', error);
+            }
+            
+            if (window.refreshDashboardReferences) {
+              
+              window.refreshDashboardReferences();
+            } else {
+              
+              // Fallback to event dispatch
+              if (created.vaultId) {
+              
+                const event = new CustomEvent('workspaceCreated', {
+                  detail: { vaultId: created.vaultId }
+                });
+              
+                window.dispatchEvent(event);
+              } else {
+              
+                const event = new CustomEvent('workspaceCreated', {
+                  detail: { vaultId: null }
+                });
+              
+                window.dispatchEvent(event);
+              }
+            }
+            
             // Refresh the task list to show the new task
             try {
               const updatedTasks = await invoke("fetch_tasks_for_workspace", { workspaceId: currentPage.workspaceId });
               relevantTasks = updatedTasks;
               renderTasks(relevantTasks);
-              console.log('✅ Refreshed task list for workspace:', currentPage.workspaceId);
+              
             } catch (error) {
               console.error('❌ Failed to refresh task list:', error);
             }
             
             // Refresh the sidebar treeview to show the new workspace
             if (window.loadTreeView) {
-              console.log('🔄 Refreshing sidebar treeview to show new workspace');
+              
               window.loadTreeView();
             }
           } catch (e) {
@@ -242,10 +273,9 @@ export async function init(page, container) {
         // Store reference for cleanup and attach listener
         cancelBtn._taskCancelHandler = cancelHandler;
         cancelBtn.addEventListener("click", cancelHandler);
-        console.log('✅ Cancel button event listener attached for page:', page.name);
+        
       }
       
-      console.log('🎉 Task event listeners set up successfully for page:', page.name);
     }
     
     // Make setupTaskEventListeners globally available
@@ -254,11 +284,11 @@ export async function init(page, container) {
     // Fallback direct delete function
     async function deleteNoteDirectly(noteId) {
       try {
-        console.log('🗑️ Deleting note directly with ID:', noteId);
+    
         await window.__TAURI__.core.invoke("delete_textbox", { 
           textboxId: noteId 
         });
-        console.log('✅ Note deleted successfully');
+    
         
         if (window.reloadCurrentPageData) {
           await window.reloadCurrentPageData();
@@ -266,7 +296,7 @@ export async function init(page, container) {
         
         showMessage("Note deleted successfully", 'success');
       } catch (error) {
-        console.error('❌ Failed to delete note:', error);
+    
         showMessage(`Failed to delete note: ${error}`, 'error');
       }
     }
@@ -943,8 +973,15 @@ export async function init(page, container) {
       const tasksCount = Array.isArray(relevantTasks) ? relevantTasks.length : 0;
       const cardsCount = Array.isArray(currentCards) ? currentCards.length : 0;
 
-      if (tasksCount === 0 && cardsCount === 0) {
+      // Hide task table when there are no tasks
+      if (tasksCount === 0) {
         tableWrapper?.classList.add('hidden');
+      } else {
+        tableWrapper?.classList.remove('hidden');
+      }
+
+      // Hide cards section when there are no cards
+      if (cardsCount === 0) {
         cardsSection?.classList.add('hidden');
       } else {
         cardsSection?.classList.remove('hidden');
@@ -1172,6 +1209,9 @@ export async function init(page, container) {
     renderTasks(relevantTasks);
     renderCards(cards);
     renderPageBlocks(notes, images, tasks, currentPage.id, currentPage.orderIndex );
+    
+    // Update visibility after initial rendering
+    updateEmptyWorkspaceVisibility();
     
     // Render card connections after initial rendering
     console.log('🔗 Initial render of card connections:', connections.length);
@@ -1712,6 +1752,18 @@ async function handleAddWorkspace(cardId) {
         cards[localCardIndex] = updatedCard;
       }
     }
+    
+    // Call global function to refresh dashboard references
+    if (window.refreshDashboardReferences) {
+      console.log('Calling refreshDashboardReferences function for card workspace creation');
+      window.refreshDashboardReferences();
+    } else {
+      console.warn('refreshDashboardReferences function not available, trying event dispatch');
+      // Fallback to event dispatch
+      window.dispatchEvent(new CustomEvent('workspaceCreated', {
+        detail: { vaultId: workspace.vaultId }
+      }));
+    }
   } catch (err) {
     console.error("Error creating workspace for card:", err);
     showMessage(`Failed to create workspace: ${err}`, 'error');
@@ -1770,6 +1822,9 @@ saveCardBtn.addEventListener("click", async () => {
     refreshCardForm();
     
     showMessage("Card created successfully", 'success');
+    
+    // Update visibility after adding card
+    updateEmptyWorkspaceVisibility();
     
     // Refresh the sidebar treeview to show the new workspace
     if (window.loadTreeView) {
@@ -2027,6 +2082,9 @@ async function handleDeleteCard(cardId) {
     }, 100);
     
     showMessage("Card deleted successfully", 'success');
+    
+    // Update visibility after card deletion
+    updateEmptyWorkspaceVisibility();
   } catch (cleanupErr) {
     console.error("Error during cleanup:", cleanupErr);
   }
@@ -2421,6 +2479,18 @@ if (!col.required) {
           // Reload workspaces for tasks
           const wss = await invoke("fetch_workspaces_for_task", { taskId: task.id });
           workspacesForTasks[task.id] = wss;
+          
+          // Call global function to refresh dashboard references
+          if (window.refreshDashboardReferences) {
+            console.log('Calling refreshDashboardReferences function for manual workspace creation');
+            window.refreshDashboardReferences();
+          } else {
+            console.warn('refreshDashboardReferences function not available, trying event dispatch');
+            // Fallback to event dispatch
+            window.dispatchEvent(new CustomEvent('workspaceCreated', {
+              detail: { vaultId: workspace.vaultId }
+            }));
+          }
         } catch (err) {
           console.error("Failed to create workspace:", err);
           showMessage(`Failed to create workspace: ${err}`, 'error');
@@ -2660,6 +2730,8 @@ if (!col.required) {
         const cardsSection = container.querySelector('.cards-section');
         if (cards.length > 0) {
           cardsSection?.classList.remove('hidden');
+        } else {
+          cardsSection?.classList.add('hidden');
         }
         
         // Add click handlers for card titles
@@ -2795,7 +2867,7 @@ if (!col.required) {
         console.log("✅ Image added successfully to workspace");
       };
 
-      // Function to extract hashtags from text content - only first line tags
+      // Function to extract hashtags from text content - extracts ALL tags from entire text (not just first line)
       function extractHashtagsFromText(text) {
         if (!text) return [];
         
@@ -2815,22 +2887,16 @@ if (!col.required) {
           processedText = cleanText.replace(/<br\s*\/?>/gi, '\n');
         }
         
-        // Split text into lines and only process the first non-empty line
-        const lines = processedText.split(/\r?\n/);
-        const firstLine = lines.find(line => line.trim().length > 0);
-        
-        console.log('📝 First line found:', JSON.stringify(firstLine));
-        
-        if (!firstLine) return [];
+        console.log('📝 Processing entire text for hashtags:', JSON.stringify(processedText));
         
         const hashtags = [];
         
-        // Improved regex to properly extract hashtags
+        // Improved regex to properly extract hashtags from entire text
         // This regex looks for # followed by word characters, but stops at the first non-word character
         const hashtagRegex = /#([a-zA-Z0-9_]+)/g;
         let match;
         
-        while ((match = hashtagRegex.exec(firstLine)) !== null) {
+        while ((match = hashtagRegex.exec(processedText)) !== null) {
           const fullMatch = match[0]; // The full match including #
           const tag = match[1]; // Just the tag name without #
           

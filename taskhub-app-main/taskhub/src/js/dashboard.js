@@ -1102,6 +1102,56 @@ export function init(vaultIdParam) {
 
   // Load the tree view to display folders
   loadTreeView();
+  
+  // Load references (workspaces created from tasks)
+  loadReferences();
+  
+     // Listen for workspace creation events to refresh references
+   console.log('Setting up workspaceCreated event listener for vault:', singleVaultId);
+   
+   // Use a more reliable approach - set up a global function that can be called from anywhere
+   window.refreshDashboardReferences = () => {
+     console.log('refreshDashboardReferences called');
+     loadReferences();
+   };
+   
+   // Also keep the event listener as a backup
+   window.addEventListener('workspaceCreated', (event) => {
+     console.log('workspaceCreated event received:', event.detail);
+     const { vaultId } = event.detail;
+     if (vaultId === singleVaultId || vaultId === null) {
+       console.log('Workspace created, refreshing references');
+       loadReferences();
+     } else {
+       console.log('Vault ID mismatch - expected:', singleVaultId, 'got:', vaultId);
+     }
+   });
+   
+   // Test the event listener
+   console.log('Testing event listener...');
+   setTimeout(() => {
+     console.log('Dispatching test event...');
+     window.dispatchEvent(new CustomEvent('workspaceCreated', {
+       detail: { vaultId: singleVaultId }
+     }));
+   }, 2000);
+   
+   // Add a test button to manually refresh references
+   const testButton = document.createElement('button');
+   testButton.textContent = 'Test Refresh References';
+   testButton.style.position = 'fixed';
+   testButton.style.top = '10px';
+   testButton.style.right = '20px';
+   testButton.style.zIndex = '9999';
+   testButton.addEventListener('click', () => {
+     console.log('Manual test button clicked');
+     if (window.refreshDashboardReferences) {
+       window.refreshDashboardReferences();
+     } else {
+       console.log('refreshDashboardReferences not available');
+     }
+   });
+  //  document.body.appendChild(testButton);
 
   async function loadTreeView() {
     try {
@@ -1246,6 +1296,52 @@ export function init(vaultIdParam) {
     }
   }
 
+  async function loadReferences() {
+    try {
+      if (!singleVaultId) {
+        console.log("No vault selected, skipping references load");
+        return;
+      }
+
+      console.log("Loading references for vault:", singleVaultId);
+      
+      // Fetch workspaces created from tasks for this vault
+      const workspaces = await invoke("fetch_workspaces_by_vault_from_task", { vaultId: singleVaultId });
+      console.log("Fetched workspaces for references:", workspaces);
+      
+      // Get the references container
+      const referencesContainer = document.querySelector('.references');
+      if (!referencesContainer) {
+        console.error("References container not found");
+        return;
+      }
+
+      // Clear existing references
+      referencesContainer.innerHTML = '';
+
+      // Add each workspace as a reference
+      workspaces.forEach(workspace => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <img src="../assets/images/text-align-left.svg" alt="link icon" 
+               style="vertical-align: middle; margin-right: 5px;">
+          ${workspace.name}
+        `;
+        
+        // Add click handler to open the workspace
+        li.style.cursor = 'pointer';
+        li.addEventListener('click', () => {
+          openWorkspaceTab(workspace, false);
+        });
+        
+        referencesContainer.appendChild(li);
+      });
+
+      console.log(`Loaded ${workspaces.length} references`);
+    } catch (error) {
+      console.error("Error loading references:", error);
+    }
+  }
 
   function loadFolderChildren(container, parentId, folders, files, workspaces) {
     const childFolders = folders.filter(f => f.parentId == parentId);

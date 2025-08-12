@@ -181,6 +181,9 @@
     gap: 6px !important;
     font-size: 12px;
     font-weight: 400;
+    white-space: normal !important;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .folder-tree span {

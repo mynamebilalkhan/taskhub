@@ -164,6 +164,10 @@ struct WorkspaceRecord {
     #[serde(default)]
     folderId: Option<String>,
     #[serde(default)]
+    folderName: Option<String>,
+    #[serde(default)]
+    vaultId: Option<i32>,
+    #[serde(default)]
     createdFromTask: Option<bool>,
     #[serde(default)]
     createdFromTaskId: Option<i32>
@@ -2505,6 +2509,50 @@ fn fetch_workspaces_for_card(cardId: i32) -> Result<WorkspaceRecord, String> {
 
     Ok(workspaces)
 }
+
+#[tauri::command]
+fn fetch_workspaces_by_vault(vaultId: i32) -> Result<Vec<WorkspaceRecord>, String> {
+    let url = format!("{}Workspace/Vault/{}", get_app_url(), vaultId);
+    let client = reqwest::blocking::Client::new();
+
+    let response = client
+        .get(&url)
+        .header("Content-Type", "application/json")
+        .send()
+        .map_err(|e| e.to_string())?;
+
+    if !response.status().is_success() {
+        return Err(format!("Failed to fetch workspaces by vault: HTTP {}", response.status()));
+    }
+
+    let workspaces: Vec<WorkspaceRecord> = response
+        .json()
+        .map_err(|e| format!("Failed to parse workspaces JSON: {}", e))?;
+
+    Ok(workspaces)
+}
+
+#[tauri::command]
+fn fetch_workspaces_by_vault_from_task(vaultId: i32) -> Result<Vec<WorkspaceRecord>, String> {
+    let url = format!("{}Workspace/Vault/{}/FromTask", get_app_url(), vaultId);
+    let client = reqwest::blocking::Client::new();
+
+    let response = client
+        .get(&url)
+        .header("Content-Type", "application/json")
+        .send()
+        .map_err(|e| e.to_string())?;
+
+    if !response.status().is_success() {
+        return Err(format!("Failed to fetch workspaces by vault from task: HTTP {}", response.status()));
+    }
+
+    let workspaces: Vec<WorkspaceRecord> = response
+        .json()
+        .map_err(|e| format!("Failed to parse workspaces JSON: {}", e))?;
+
+    Ok(workspaces)
+}
 #[tauri::command]
 fn fetch_pages_for_workspace(workspaceId: i32) -> Result<Vec<Page>, String> {
     let url = format!("{}Page/?workspaceId={}", get_app_url(), workspaceId);
@@ -2531,7 +2579,7 @@ fn create_workspace_for_task_internal(
     task_name: &str,
     task_id: i32,
     page_id: i32
-) -> Result<bool, String> {
+) -> Result<i32, String> {
 
     
     // First, get the page to find the workspace ID
@@ -2551,6 +2599,8 @@ fn create_workspace_for_task_internal(
     let page_data: serde_json::Value = page_response
         .json()
         .map_err(|e| format!("Failed to parse page JSON: {}", e))?;
+    
+    println!("(rust) Page data: {:?}", page_data);
     
     let workspace_id = page_data["workspaceId"].as_i64().unwrap_or(0) as i32;
     
@@ -2575,7 +2625,14 @@ fn create_workspace_for_task_internal(
         .json()
         .map_err(|e| format!("Failed to parse workspace JSON: {}", e))?;
     
+    println!("(rust) Workspace data: {:?}", workspace_data);
+    
     let folder_id = workspace_data["folderId"].as_str().unwrap_or("0").to_string();
+    
+    // Get the vault ID from the page data instead of workspace data
+    let vault_id = page_data["vaultId"].as_i64().unwrap_or(0) as i32;
+    
+    println!("(rust) Creating workspace for task - folder_id: {}, vault_id: {}", folder_id, vault_id);
     
     // Now create the workspace for the task
     let workspace_url_create = format!("{}Workspace/", get_app_url());
@@ -2600,7 +2657,7 @@ fn create_workspace_for_task_internal(
         .map_err(|e| e.to_string())?;
     
     if create_response.status().is_success() {
-        Ok(true)
+        Ok(vault_id)
     } else {
         Err(format!("Failed to create workspace: HTTP {}", create_response.status()))
     }
@@ -2669,15 +2726,28 @@ fn create_task_for_page(
         
         if task_id > 0 {
             println!("(rust) Task created successfully with ID: {}", task_id);
+            println!("(rust) About to create workspace for task: {}", title);
             
-            // Now create a workspace for this task
+            // Now create a workspace for this task and get vault ID
             match create_workspace_for_task_internal(&title, task_id, pageId) {
-                Ok(_) => println!("(rust) Workspace created successfully for task: {}", title),
-                Err(e) => println!("(rust) Failed to create workspace for task: {} - Error: {}", title, e),
+                Ok(vault_id) => {
+                    println!("(rust) Workspace created successfully for task: {}", title);
+                    println!("(rust) Vault ID returned: {}", vault_id);
+                    // Add vault ID to the response
+                    let mut response_data = created_task.as_object().unwrap().clone();
+                    response_data.insert("vaultId".to_string(), serde_json::Value::Number(serde_json::Number::from(vault_id)));
+                    let final_response = serde_json::Value::Object(response_data);
+                    println!("(rust) Final response with vaultId: {:?}", final_response);
+                    Ok(final_response)
+                },
+                Err(e) => {
+                    println!("(rust) Failed to create workspace for task: {} - Error: {}", title, e);
+                    Ok(created_task)
+                }
             }
-        }
-    
-        Ok(created_task) 
+        } else {
+            Ok(created_task)
+        } 
     } else {
         Err(format!("Failed to create task: HTTP {}", response.status()))
     }
@@ -4582,6 +4652,8 @@ pub fn run() {
             update_task,
             fetch_workspaces_for_task,
             fetch_workspaces_for_card,
+            fetch_workspaces_by_vault,
+            fetch_workspaces_by_vault_from_task,
             rename_page,
             create_page_for_workspace,
             create_url_for_folder,

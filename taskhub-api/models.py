@@ -143,7 +143,8 @@ class Workspace(db.Model):
             'createdDateTime': self.CreatedDateTime.isoformat() if self.CreatedDateTime else None,
             'lastModifyDateTime': self.LastModifyDateTime.isoformat() if self.LastModifyDateTime else None,
             'folderId': self.FolderId,
-            'folderName': None if self.Folder is None else self.Folder.Name ,
+            'folderName': None if self.Folder is None else self.Folder.Name,
+            'vaultId': None if self.Folder is None else self.Folder.VaultId,
             'createdFromTask': self.CreatedFromTask,
             'createdFromTaskId': self.CreatedFromTaskId,
             'createdFromCardId': self.CreatedFromCardId        
