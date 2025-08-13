@@ -207,9 +207,11 @@ class File(db.Model):
     Name = Column(String)
     Path = Column(String)
     FolderId = Column(Integer, ForeignKey('folders.Id'), nullable=True)
+    PageId = Column(Integer, ForeignKey('pages.Id'), nullable=True)
+    WorkspaceId = Column(Integer, ForeignKey('workspaces.Id'), nullable=True)
     CreatedBy = Column(Integer, ForeignKey('users.Id'))
     CreatedDateTime = Column(DateTime)
-    Iso265File = Column(Boolean)
+    Iso365File = Column(Boolean)
     Folder = relationship('Folder', back_populates='Files')
     CreatedByUser = relationship('User', foreign_keys=[CreatedBy], back_populates='FilesCreated', overlaps="FilesCreated")
 
@@ -219,11 +221,15 @@ class File(db.Model):
             'name': self.Name,
             'path': self.Path,
             'folderId': self.FolderId,
+            'pageId': self.PageId,
+            'workspaceId': self.WorkspaceId,
             'createdBy': self.CreatedBy,
             'createdByUser': self.CreatedByUser.getfullname() if self.CreatedByUser else "",
             'createdDateTime': self.CreatedDateTime.isoformat() if self.CreatedDateTime else None,
-            'iso365File': self.Iso265File
+            'iso365File': self.Iso365File
         }
+
+
 class Url(db.Model):
     __tablename__ = 'urls'
     Id = Column(Integer, primary_key=True)
@@ -340,7 +346,7 @@ class User(db.Model):
             'lastName': self.LastName,
             'createdDateTime': self.CreatedDateTime.isoformat() if self.CreatedDateTime else None,
             'companyId': self.CompanyId,
-            'company': self.Company.Name,
+            'company': self.Company.Name if self.Company else None,
             'paymentPlan': self.PaymentPlan,
             'paymentDateTime': self.PaymentDateTime.isoformat() if self.PaymentDateTime else None,
             'fullName' : self.getfullname() if self else "",
@@ -399,7 +405,7 @@ class Page(db.Model):
             'createdByUser': self.CreatedByUser.getfullname() if self.CreatedByUser else "",
             'createdDateTime': self.CreatedDateTime.isoformat() if self.CreatedDateTime else None,
             'lastModifyDateTime': self.LastModifyDateTime.isoformat() if self.LastModifyDateTime else None,
-            'vaultId': self.Workspace.Folder.VaultId,
+            'vaultId': self.Workspace.Folder.VaultId if self.Workspace and self.Workspace.Folder else None,
             'orderIndex': self.OrderIndex
         }
     

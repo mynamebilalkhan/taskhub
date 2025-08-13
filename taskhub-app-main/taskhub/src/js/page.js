@@ -939,7 +939,7 @@ export async function init(page, container) {
     const cardContextMenu = document.getElementById("card-context-menu");
     
     // Declare data variables that will be updated by reloadPageData
-    let tasks, notes, images, cards, workspace, workspacesForTasks = {};
+    let tasks, notes, images, cards, files, workspace, workspacesForTasks = {};
     // Simple task storage - no complex workspace-specific storage needed
     let relevantTasks = [];
     
@@ -1018,6 +1018,16 @@ export async function init(page, container) {
         notes = await invoke("fetch_textbox_for_page", { pageId: currentPage.id });
         images = await invoke("fetch_images_for_page", { pageId: currentPage.id });
         cards = await invoke("fetch_cards_for_page", { pageId: currentPage.id });
+        try {
+          const allFiles = await invoke("fetch_files");
+          // Convert IDs to numbers for proper comparison
+          const pageIdNum = Number(currentPage.id);
+          files = allFiles.filter(file => Number(file.pageId) === pageIdNum);
+          console.log('📁 Filtered files for page', pageIdNum, ':', files);
+        } catch (error) {
+          console.log('📁 fetch_files failed, using empty files array:', error);
+          files = [];
+        }
         workspace = await invoke("fetch_workspace", { workspaceId: currentPage.workspaceId });
         
         // Load card connections for the current page
@@ -1052,8 +1062,8 @@ export async function init(page, container) {
         // Render card connections after cards are rendered
         renderCardConnections(connections);
         
-        // Then render page blocks (notes and images only)
-        renderPageBlocks(notes, images, tasks, currentPage.id, currentPage.orderIndex);
+        // Then render page blocks (notes, images, and files)
+        renderPageBlocks(notes, images, files, tasks, currentPage.id, currentPage.orderIndex);
         
         // Re-query DOM elements to ensure they're current
         const cardHeader = container.querySelector(".card-header");
@@ -1115,6 +1125,16 @@ export async function init(page, container) {
     notes = await invoke("fetch_textbox_for_page", { pageId: currentPage.id });
     const users = await invoke("get_users_for_vault",{ vaultId: currentPage.vaultId});
     cards = await invoke("fetch_cards_for_page", { pageId: currentPage.id });
+    try {
+      const allFiles = await invoke("fetch_files");
+      // Convert IDs to numbers for proper comparison
+      const pageIdNum = Number(currentPage.id);
+      files = allFiles.filter(file => Number(file.pageId) === pageIdNum);
+      console.log('📁 Filtered files for page', pageIdNum, ':', files);
+    } catch (error) {
+      console.log('📁 fetch_files failed, using empty files array:', error);
+      files = [];
+    }
     workspace = await invoke("fetch_workspace", { workspaceId: currentPage.workspaceId });
     images = await invoke("fetch_images_for_page", { pageId: currentPage.id });
 
@@ -1208,7 +1228,7 @@ export async function init(page, container) {
     
     renderTasks(relevantTasks);
     renderCards(cards);
-    renderPageBlocks(notes, images, tasks, currentPage.id, currentPage.orderIndex );
+    renderPageBlocks(notes, images, files, tasks, currentPage.id, currentPage.orderIndex );
     
     // Update visibility after initial rendering
     updateEmptyWorkspaceVisibility();
@@ -2572,7 +2592,7 @@ if (!col.required) {
           if (relevantTasks.length === 0) {
             // Use current page (for tab switching) or fallback to original page
         const currentPage = window.currentPage || page;
-        renderPageBlocks(notes, images, relevantTasks, currentPage.id, currentPage.orderIndex);
+        renderPageBlocks(notes, images, files, relevantTasks, currentPage.id, currentPage.orderIndex);
           }
         } catch (err) {
           console.error("Failed to delete task:", err);
@@ -3335,10 +3355,11 @@ if (!col.required) {
         }, 10);
       }
 
-      function renderPageBlocks(notes, images, tasks, pageId, orderIndex) {
+      function renderPageBlocks(notes, images, files, tasks, pageId, orderIndex) {
     console.log('🔄 renderPageBlocks called with:', {
       notes: notes.length,
-      images: images.length, 
+      images: images.length,
+      files: files.length,
       tasks: tasks.length,
       pageId
     });
@@ -3350,10 +3371,11 @@ if (!col.required) {
         // Don't manipulate task table - let it stay in its original position
         // The task table should be handled by renderTasks function only
         
-        // Prepare draggable items (notes and images) and sort them
+        // Prepare draggable items (notes, images, and files) and sort them
         let draggableItems = [
           ...notes.map(n => ({ type: "note", ...n })),
-          ...images.map(i => ({ type: "image", ...i }))
+          ...images.map(i => ({ type: "image", ...i })),
+          ...files.map(f => ({ type: "file", ...f }))
         ];
         
         // Sort draggable items by orderIndex
@@ -3683,6 +3705,96 @@ if (!col.required) {
             imageContainer.appendChild(img);
             imageContainer.appendChild(deleteBtn);
             block.appendChild(imageContainer);
+          }
+          
+          if (item.type === "file") {
+            console.log('🔄 Rendering file with ID:', item.id);
+            // Add draggable class to file blocks
+            block.classList.add('draggable');
+            block.classList.add('file-block'); // Add file-block class for consistent styling
+            
+            // Create file container with consistent styling
+            const fileContainer = document.createElement("div");
+            fileContainer.style.position = "relative";
+            fileContainer.style.display = "block";
+            fileContainer.style.padding = "12px";
+            fileContainer.style.border = "1px solid #e5e7eb";
+            fileContainer.style.borderRadius = "8px";
+            fileContainer.style.background = "#f9fafb";
+            fileContainer.style.marginBottom = "8px";
+            
+            // Create delete button for file
+            const deleteBtn = document.createElement("button");
+            deleteBtn.innerHTML = "×";
+            deleteBtn.className = "delete-btn";
+            deleteBtn.style.cssText = `
+              position: absolute;
+              top: 5px;
+              right: 5px;
+              width: 20px;
+              height: 20px;
+              border: none;
+              background: rgba(255, 0, 0, 0.7);
+              color: white;
+              border-radius: 50%;
+              cursor: pointer;
+              font-size: 14px;
+              line-height: 1;
+              display: none;
+              z-index: 10;
+            `;
+            
+            // Show/hide delete button on hover
+            block.addEventListener("mouseenter", () => {
+              deleteBtn.style.display = "block";
+            });
+            block.addEventListener("mouseleave", () => {
+              deleteBtn.style.display = "none";
+            });
+            
+            // Delete button click handler
+            deleteBtn.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              console.log('🗑️ Delete button clicked for file ID:', item.id);
+              
+              try {
+                await window.__TAURI__.core.invoke("delete_file", { 
+                  fileId: item.id 
+                });
+                
+                console.log('✅ File deleted successfully, reloading page blocks');
+                // Reload the page data to refresh the display
+                reloadPageData();
+              } catch (error) {
+                console.error('❌ Failed to delete file:', error);
+              }
+            });
+            
+            // Create file content with consistent styling matching dashboard.js
+            const fileContent = document.createElement("div");
+            fileContent.style.display = "flex";
+            fileContent.style.alignItems = "center";
+            
+            // Use the global getFileDownloadUrl function for consistent URL construction
+            const downloadUrl = window.getFileDownloadUrl ? window.getFileDownloadUrl(item, pageId) : `${window.__TAURI__?.core?.invoke ? 'http://127.0.0.1:5000' : ''}/uploads/${pageId}/${encodeURIComponent(item.name)}`;
+            
+            fileContent.innerHTML = `
+              <img src="../assets/images/icon-file.svg" style="width: 24px; height: 24px; margin-right: 12px;">
+              <div style="flex: 1;">
+                <div style="font-weight: 500; color: #1f2937;">${item.name}</div>
+                <div style="font-size: 12px; color: #6b7280;">
+                  Created: ${new Date(item.createdDateTime).toLocaleDateString()}
+                  ${item.createdByUser ? `• by ${item.createdByUser}` : ''}
+                </div>
+              </div>
+              <a href="${downloadUrl}" download="${item.name}" target="_blank" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-block;">
+                Download
+              </a>
+            `;
+            
+            fileContainer.appendChild(fileContent);
+            fileContainer.appendChild(deleteBtn);
+            block.appendChild(fileContainer);
           }
           
           container.appendChild(block);

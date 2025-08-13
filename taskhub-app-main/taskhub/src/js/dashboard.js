@@ -82,25 +82,89 @@ export function init(vaultIdParam) {
 
     loadTreeView(); // refresh after adding
   });
+  // async function addFileFromFAB(isImage = false) {
+  //   // 1) see if something is selected in the tree
+  //   const selected = document.querySelector('.active-label');
+  //   if (!selected) {
+  //     return;
+  //   }
+
+  //   // 2) check if it’s a folder
+  //   if (!selected.classList.contains('folder-label')) {
+  //     return;
+  //   }
+
+  //   // 3) read the folderId, etc.
+  //   const folderId = parseInt(selected.dataset.folderId, 10);
+  //   if (!folderId) {
+  //     return;
+  //   }
+
+  //   try {
+  //     // 4) Tauri "open_single_file_picker"
+  //     const filePath = await invoke("open_single_file_picker");
+  //     if (!filePath) {
+  //       // user canceled
+  //       return;
+  //     }
+
+  //     // 5) Extract filename
+  //     const fileName = filePath.split(/[\\/]/).pop() ?? "";
+
+  //     // If we want an image, check extension
+  //     if (isImage) {
+  //       const ext = fileName.toLowerCase().split('.').pop();
+  //       const validExtensions = ["jpg", "jpeg", "png"];
+  //       if (!validExtensions.includes(ext)) {
+  //         console.log("Please select an image file");
+  //         return;
+  //       }
+  //     }
+
+  //     // 6) Read file contents as base64
+  //     const fileContents = await invoke("read_file_as_base64", {
+  //       path: filePath
+  //     });
+
+  //     // 7) pass to your Rust command to create the file
+  //     const userId = await invoke("get_current_user_id");
+  //     await invoke("create_file_for_folder", {
+  //       name: fileName,
+  //       path: `/${folderId}/`,
+  //       folderId,
+  //       createdBy: userId,
+  //       createdByUser: "demo",
+  //       fileContentsBase64: fileContents,
+  //     });
+
+  //     // 8) Refresh your tree
+  //     loadTreeView();
+  //     ensureAddTabButton();
+  //   } catch (err) {
+  //     console.error("Error adding file from FAB:", err);
+  //   }
+  // }
+
   async function addFileFromFAB(isImage = false) {
-    // 1) see if something is selected in the tree
-    const selected = document.querySelector('.active-label');
-    if (!selected) {
-      return;
-    }
-
-    // 2) check if it’s a folder
-    if (!selected.classList.contains('folder-label')) {
-      return;
-    }
-
-    // 3) read the folderId, etc.
-    const folderId = parseInt(selected.dataset.folderId, 10);
-    if (!folderId) {
-      return;
-    }
-
     try {
+      // Check if we're in a workspace context
+      const activeTab = document.querySelector(".tab.active");
+      if (!activeTab) {
+        console.warn('⚠️ No active tab found for file upload');
+        return;
+      }
+      
+      // Get workspace ID from the active tab
+      const workspaceId = activeTab.dataset.workspaceId;
+      if (!workspaceId) {
+        console.warn('⚠️ No workspace ID found for file upload');
+        return;
+      }
+      
+      // Check if there's an active page tab within the workspace
+      const activePageTab = document.querySelector(".workspace-tab.active");
+      const pageId = activePageTab ? parseInt(activePageTab.dataset.pageId) : null;
+
       // 4) Tauri "open_single_file_picker"
       const filePath = await invoke("open_single_file_picker");
       if (!filePath) {
@@ -108,42 +172,69 @@ export function init(vaultIdParam) {
         return;
       }
 
+      // Log the file path
+      console.log("File path:", filePath);
+
       // 5) Extract filename
       const fileName = filePath.split(/[\\/]/).pop() ?? "";
 
-      // If we want an image, check extension
-      if (isImage) {
-        const ext = fileName.toLowerCase().split('.').pop();
-        const validExtensions = ["jpg", "jpeg", "png"];
-        if (!validExtensions.includes(ext)) {
-          console.log("Please select an image file");
-          return;
-        }
+      // File type validation
+      const allowedExtensions = ["pdf", "xlsx", "doc", "docx", "txt"];
+      const fileExtension = fileName.split('.').pop().toLowerCase();
+      if (!allowedExtensions.includes(fileExtension)) {
+        alert("Please select a valid file type: pdf, xlsx, doc, docx, txt");
+        return;
       }
 
-      // 6) Read file contents as base64
-      const fileContents = await invoke("read_file_as_base64", {
-        path: filePath
-      });
+      // 6) Use Tauri command to upload file directly
+       // The file path will be passed to the Rust side which will handle reading and uploading
+      console.log("Calling Tauri upload_file command");
+      
+      // Convert pageId and workspaceId to strings for the Tauri command
+      const pageIdStr = pageId ? pageId.toString() : null;
+      const workspaceIdStr = workspaceId ? workspaceId.toString() : null;
+      
+      try {
+        const result = await invoke("upload_file", {
+          filePath: filePath,
+          fileName: fileName,
+          pageId: pageIdStr,
+          workspaceId: workspaceIdStr
+        });
+        
+        console.log("Upload result:", result);
+        
+        if (!result) {
+          throw new Error("Upload failed");
+        }
+        
+        // Create a file object from the result
+        const fileObject = {
+          id: result.id || result.fileId || Date.now(), // Use appropriate ID from result or fallback
+          name: fileName,
+          path: result.path || filePath,
+          createdDateTime: new Date().toISOString(),
+          createdByUser: window.currentUser?.displayName || 'You'
+        };
+        
+        // Render the new file as a draggable block
+        await renderNewFile(fileObject, pageId);
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        throw new Error(`Upload failed: ${error}`);
+      }
+      
+      // File upload completed successfully
+       console.log("File upload completed successfully");
 
-      // 7) pass to your Rust command to create the file
-      const userId = await invoke("get_current_user_id");
-      await invoke("create_file_for_folder", {
-        name: fileName,
-        path: `/${folderId}/`,
-        folderId,
-        createdBy: userId,
-        createdByUser: "demo",
-        fileContentsBase64: fileContents,
-      });
-
-      // 8) Refresh your tree
+      // 10) Refresh your tree
       loadTreeView();
       ensureAddTabButton();
     } catch (err) {
       console.error("Error adding file from FAB:", err);
     }
   }
+
   async function addImageFromFAB(pageId) {
 
     try {
@@ -1650,7 +1741,7 @@ async function renderNewImage(image, pageId) {
   }
 
   const block = document.createElement("div");
-  block.classList.add("page-block");
+  block.classList.add("page-block", "draggable"); // Add draggable class to match page.js
   block.setAttribute("data-type", "image");
   block.setAttribute("data-id", image.id);
 
@@ -1667,8 +1758,77 @@ async function renderNewImage(image, pageId) {
   }
   enableBlockDragAndDrop(containerEl);
 }
+
+// Helper function to get the proper download URL for files
+window.getFileDownloadUrl = function(file, pageId) {
+  const apiUrl = window.__TAURI__?.core?.invoke ? 'http://127.0.0.1:5000' : '';
+  return `${apiUrl}/uploads/${pageId}/${encodeURIComponent(file.name)}`;
+}
+
+async function renderNewFile(file, pageId) {
+  // Check if we're in workspace context (has workspace-specific elements)
+  const workspaceContainer = document.querySelector("#workspace-main-content");
+  const isInWorkspace = workspaceContainer && workspaceContainer.querySelector(".page-content-wrapper");
+  
+  if (isInWorkspace && window.renderNewFileInWorkspace) {
+    // Use workspace-specific rendering function
+    console.log("Rendering file in workspace context");
+    window.renderNewFileInWorkspace(file, pageId);
+    return;
+  }
+  
+  // Original dashboard logic
+  const containerEl = document.getElementById("page-blocks-container");
+  if (!containerEl) {
+    console.error("page-blocks-container not found in dashboard context");
+    return;
+  }
+
+  const block = document.createElement("div");
+  block.classList.add("page-block", "file-block", "draggable"); // Add draggable class
+  block.setAttribute("data-type", "file");
+  block.setAttribute("data-id", file.id);
+
+  // Create file container
+  const fileContainer = document.createElement("div");
+  fileContainer.style.position = "relative";
+  fileContainer.style.display = "block";
+  fileContainer.style.padding = "12px";
+  fileContainer.style.border = "1px solid #e5e7eb";
+  fileContainer.style.borderRadius = "8px";
+  fileContainer.style.background = "#f9fafb";
+  fileContainer.style.marginBottom = "8px";
+  
+  // Create file content
+  const fileContent = document.createElement("div");
+  fileContent.style.display = "flex";
+  fileContent.style.alignItems = "center";
+  fileContent.innerHTML = `
+    <img src="../assets/images/icon-file.svg" style="width: 24px; height: 24px; margin-right: 12px;">
+    <div style="flex: 1;">
+      <div style="font-weight: 500; color: #1f2937;">${file.name}</div>
+      <div style="font-size: 12px; color: #6b7280;">
+        Created: ${new Date(file.createdDateTime).toLocaleDateString()}
+        ${file.createdByUser ? `• by ${file.createdByUser}` : ''}
+      </div>
+    </div>
+    <a href="${getFileDownloadUrl(file, pageId)}" download="${file.name}" target="_blank" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-block; text-align: center;">
+      Download
+    </a>
+  `;
+  
+  fileContainer.appendChild(fileContent);
+  block.appendChild(fileContainer);
+  containerEl.appendChild(block);
+  
+  const wrapper = containerEl.closest(".page-content-wrapper");
+  if (wrapper) {
+    wrapper.classList.toggle("hidden");
+  }
+  enableBlockDragAndDrop(containerEl);
+}
 function enableBlockDragAndDrop(container) {
-  interact('.page-block')
+  interact('.page-block.draggable')
     .draggable({
       inertia: true,
       listeners: {

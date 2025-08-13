@@ -1,9 +1,17 @@
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_restx import Api, Namespace
 from flask_migrate import Migrate
+from flask_cors import CORS
+import os
 
 app = Flask(__name__)
+
+# Enable CORS for all routes
+CORS(app, origins=["http://127.0.0.1:1430", "http://localhost:1430"], 
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization"])
+
 api = Api(app, version='1.1', title='Task API',
           description='A Task management API',
           )
@@ -80,6 +88,12 @@ api.add_namespace(eventNameSpace)
 api.add_namespace(pageNameSpace)
 api.add_namespace(cardNameSpace)
 api.add_namespace(imageNameSpace)
+
+# Route to serve uploaded files
+@app.route('/uploads/<path:pageId>/<path:filename>')
+def download_file(pageId, filename):
+    upload_folder = os.path.join('uploads', pageId)
+    return send_from_directory(upload_folder, filename)
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)

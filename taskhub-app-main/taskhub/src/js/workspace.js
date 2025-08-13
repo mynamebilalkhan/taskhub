@@ -1,3 +1,141 @@
+// Function to render a new image in workspace context
+window.renderNewImageInWorkspace = function(image, pageId) {
+  console.log('Rendering new image in workspace context:', image);
+  
+  const pageBlocksContainer = document.querySelector('#page-blocks-container');
+  if (!pageBlocksContainer) {
+    console.error('Page blocks container not found in workspace');
+    return;
+  }
+  
+  const imageDiv = document.createElement('div');
+  imageDiv.className = 'page-block draggable';
+  imageDiv.setAttribute('data-type', 'image');
+  imageDiv.setAttribute('data-id', image.id);
+  
+  const img = document.createElement('img');
+  img.src = `data:image/png;base64,${image.base64}`;
+  img.alt = image.name || 'Page image';
+  img.classList.add('page-image');
+  img.style.maxWidth = '100%';
+  img.style.height = 'auto';
+  
+  imageDiv.appendChild(img);
+  pageBlocksContainer.appendChild(imageDiv);
+  
+  // Enable drag and drop for blocks
+  if (typeof enableBlockDragAndDrop === 'function') {
+    enableBlockDragAndDrop(pageBlocksContainer);
+  }
+};
+
+// Function to render a new file in workspace context
+window.renderNewFileInWorkspace = function(file, pageId) {
+  console.log('Rendering new file in workspace context:', file);
+  
+  const pageBlocksContainer = document.querySelector('#page-blocks-container');
+  if (!pageBlocksContainer) {
+    console.error('Page blocks container not found in workspace');
+    return;
+  }
+  
+  const fileDiv = document.createElement('div');
+  fileDiv.className = 'page-block file-block draggable';
+  fileDiv.setAttribute('data-type', 'file');
+  fileDiv.setAttribute('data-id', file.id);
+  
+  // Create file container with relative positioning for delete button
+  const fileContainer = document.createElement('div');
+  fileContainer.style.position = 'relative';
+  fileContainer.style.display = 'block';
+  fileContainer.style.padding = '12px';
+  fileContainer.style.border = '1px solid #e5e7eb';
+  fileContainer.style.borderRadius = '8px';
+  fileContainer.style.background = '#f9fafb';
+  fileContainer.style.marginBottom = '8px';
+  
+  // Create delete button
+  const deleteBtn = document.createElement('button');
+  deleteBtn.innerHTML = '×';
+  deleteBtn.className = 'delete-btn';
+  deleteBtn.style.cssText = `
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: rgba(255, 0, 0, 0.7);
+    color: white;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    display: none;
+    z-index: 10;
+  `;
+  
+  // Show/hide delete button on hover
+  fileDiv.addEventListener('mouseenter', () => {
+    deleteBtn.style.display = 'block';
+  });
+  fileDiv.addEventListener('mouseleave', () => {
+    deleteBtn.style.display = 'none';
+  });
+  
+  // Delete button click handler
+  deleteBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    console.log('🗑️ Delete button clicked for file ID:', file.id);
+    
+    try {
+      await window.__TAURI__.core.invoke('delete_file', { 
+        fileId: file.id 
+      });
+      
+      console.log('✅ File deleted successfully');
+      
+      // Reload page data to reflect changes
+      if (window.reloadCurrentPageData) {
+        await window.reloadCurrentPageData();
+      }
+    } catch (error) {
+      console.error('❌ Failed to delete file:', error);
+    }
+  });
+  
+  // Create file content with download button
+  const fileContent = document.createElement('div');
+  fileContent.style.display = 'flex';
+  fileContent.style.alignItems = 'center';
+  
+  // Add file icon and content using innerHTML for consistency with dashboard.js
+  fileContent.innerHTML = `
+    <img src="../assets/images/icon-file.svg" style="width: 24px; height: 24px; margin-right: 12px;">
+    <div style="flex: 1;">
+      <div style="font-weight: 500; color: #1f2937;">${file.name}</div>
+      <div style="font-size: 12px; color: #6b7280;">
+        Created: ${new Date(file.createdDateTime || Date.now()).toLocaleDateString()}
+        ${file.createdByUser ? `• by ${file.createdByUser}` : ''}
+      </div>
+    </div>
+    <a href="${window.getFileDownloadUrl ? window.getFileDownloadUrl(file, pageId) : `${window.__TAURI__?.core?.invoke ? 'http://127.0.0.1:5000' : ''}/uploads/${pageId}/${encodeURIComponent(file.name)}`}" download="${file.name}" target="_blank" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-block; text-align: center;">
+      Download
+    </a>
+  `;
+  
+  // Append elements
+  fileContainer.appendChild(fileContent);
+  fileContainer.appendChild(deleteBtn);
+  fileDiv.appendChild(fileContainer);
+  pageBlocksContainer.appendChild(fileDiv);
+  
+  // Enable drag and drop for blocks
+  if (typeof enableBlockDragAndDrop === 'function') {
+    enableBlockDragAndDrop(pageBlocksContainer);
+  }
+};
+
 // Independent task event listener setup function
 function setupTaskListenersIndependently(page, container) {
   console.log('🚀 Independent task listener setup for:', page.name);
@@ -775,15 +913,30 @@ if (workspaceFolder) {
       showPageLoadingOverlay('Loading...');
       const cards = await window.__TAURI__.core.invoke("fetch_cards_for_page", { pageId: page.id });
       
+      showPageLoadingOverlay('Loading...');
+      let files = [];
+      try {
+        // Try to fetch files for page, fallback to empty array if command doesn't exist
+        const allFiles = await window.__TAURI__.core.invoke("fetch_files");
+        // Convert IDs to numbers for proper comparison
+        const pageIdNum = Number(page.id);
+        files = allFiles.filter(file => Number(file.pageId) === pageIdNum);
+        console.log('📁 Filtered files for page', pageIdNum, ':', files);
+      } catch (error) {
+        console.log('📁 fetch_files failed, using empty files array:', error);
+        files = [];
+      }
+      
       console.log('📋 Data loaded for page', page.name, ':', {
         tasks: tasks.length,
         notes: notes.length,
         images: images.length,
-        cards: cards.length
+        cards: cards.length,
+        files: files.length
       });
       
       // Use manual reload to ensure page-scoped rendering
-      await manualPageReload(page, pageWrapper, tasks, notes, images, cards);
+      await manualPageReload(page, pageWrapper, tasks, notes, images, cards, files);
       
       // Set up task listeners for the switched page
       console.log('🔧 Setting up task listeners for switched page:', page.name);
@@ -803,7 +956,7 @@ if (workspaceFolder) {
   }
   
   // Manual page reload function as fallback
-  async function manualPageReload(page, pageWrapper, tasks, notes, images, cards) {
+  async function manualPageReload(page, pageWrapper, tasks, notes, images, cards, files) {
     console.log('🔧 Manual page reload for:', page.name);
     
     // Clear existing content
@@ -880,7 +1033,9 @@ if (workspaceFolder) {
     if (pageBlocksContainer) {
       notes.forEach(note => {
         const noteDiv = document.createElement('div');
-        noteDiv.className = 'page-block';
+        noteDiv.className = 'page-block draggable';
+        noteDiv.setAttribute('data-type', 'note');
+        noteDiv.setAttribute('data-id', note.id);
         noteDiv.innerHTML = `
           <div class="note content-editable" contenteditable="true">${note.content || ''}</div>
         `;
@@ -889,12 +1044,36 @@ if (workspaceFolder) {
       
       images.forEach(image => {
         const imageDiv = document.createElement('div');
-        imageDiv.className = 'page-block';
-        imageDiv.innerHTML = `
-          <img src="${image.url}" alt="Page image" style="max-width: 100%; height: auto;">
-        `;
+        imageDiv.className = 'page-block draggable';
+        imageDiv.setAttribute('data-type', 'image');
+        imageDiv.setAttribute('data-id', image.id);
+        
+        const img = document.createElement('img');
+        img.src = image.url;
+        img.alt = 'Page image';
+        img.style.maxWidth = '100%';
+        img.style.height = 'auto';
+        
+        imageDiv.appendChild(img);
         pageBlocksContainer.appendChild(imageDiv);
       });
+      
+      // Render files
+      console.log('Files to render:', files);
+      // Clear existing files first to ensure consistent rendering
+      const existingFiles = pageBlocksContainer.querySelectorAll('.file-block');
+      existingFiles.forEach(fileEl => fileEl.remove());
+      
+      // Render files with consistent styling
+      files.forEach(file => {
+        // Use the renderNewFileInWorkspace function for consistency
+        window.renderNewFileInWorkspace(file, page.id);
+      });
+      
+      // Enable drag and drop for blocks
+      if (typeof enableBlockDragAndDrop === 'function' && pageBlocksContainer) {
+        enableBlockDragAndDrop(pageBlocksContainer);
+      }
     }
 
     // Render cards for this page
@@ -1155,6 +1334,51 @@ if (workspaceFolder) {
     });
 }
 
+  // Enable drag and drop functionality for page blocks
+  function enableBlockDragAndDrop(container) {
+    if (!window.interact) {
+      console.error('Interact.js not loaded');
+      return;
+    }
+    
+    window.interact('.page-block.draggable')
+      .draggable({
+        inertia: true,
+        modifiers: [
+          window.interact.modifiers.restrictRect({
+            restriction: container,
+            endOnly: true
+          })
+        ],
+        autoScroll: true,
+        listeners: {
+          start: function(event) {
+            event.target.classList.add('dragging');
+          },
+          move: dragMoveListener,
+          end: function(event) {
+            event.target.classList.remove('dragging');
+            // Update positions after drag ends
+            const blocks = Array.from(container.querySelectorAll('.page-block'));
+            blocks.forEach((block, index) => {
+              // You can save the new positions to your database here if needed
+              console.log(`Block ${block.dataset.id} is now at position ${index}`);
+            });
+          }
+        }
+      });
+  }
+  
+  function dragMoveListener(event) {
+    const target = event.target;
+    const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+    const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+    
+    target.style.transform = `translate(${x}px, ${y}px)`;
+    target.setAttribute('data-x', x);
+    target.setAttribute('data-y', y);
+  }
+  
   // Show page loading overlay with custom message
   function showPageLoadingOverlay(message = 'Loading...') {
     const loadingOverlay = document.getElementById('page-loading-overlay');

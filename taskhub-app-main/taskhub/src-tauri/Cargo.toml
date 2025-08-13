@@ -24,7 +24,7 @@ base64 = { version = "0.22", features = ["alloc"] }
 dirs = "6.0.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-reqwest = { version = "0.12", features = ["blocking", "json"] }
+reqwest = { version = "0.12", features = ["blocking", "json", "multipart"] }
 tokio = { version = "1.0", features = ["full"] }
 rusqlite = "0.31.0"
 libsqlite3-sys = { version = "0.28.0", features = ["bundled"] }
