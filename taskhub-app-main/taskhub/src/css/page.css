@@ -798,6 +798,7 @@
 
 div#page-blocks-container {
   background-color: white;
+  padding-bottom: 40px;
 }
 
 /* Unified Content Layout */
@@ -962,4 +963,12 @@ div#page-blocks-container {
   background: #f9fafb;
   border-radius: 8px;
   border: 2px dashed #d1d5db;
+}
+
+/* .file-label:hover ~ button {
+    display: flex !important;
+} */
+
+li.file:hover button {
+    display: flex !important;
 }

@@ -530,7 +530,7 @@ export function init(vaultIdParam) {
         break;
 
       case 'folder':
-        // At folder level: Allow workspace and subfolder creation
+        // At folder level: Allow workspace, subfolder, file, and URL creation
         if (menuItems['add-workspace']) {
           menuItems['add-workspace'].style.display = 'block';
           menuItems['add-workspace'].style.pointerEvents = 'auto';
@@ -542,6 +542,10 @@ export function init(vaultIdParam) {
         if (menuItems['add-url']) {
           menuItems['add-url'].style.display = 'block';
           menuItems['add-url'].style.pointerEvents = 'auto';
+        }
+        if (menuItems['add-file']) {
+          menuItems['add-file'].style.display = 'block';
+          menuItems['add-file'].style.pointerEvents = 'auto';
         }
         break;
 
@@ -798,9 +802,13 @@ export function init(vaultIdParam) {
               fileContentsBase64: fileContents,
             });
 
+            // Show success message
+            showInfoMessage(`File "${fileName}" uploaded successfully`, true);
+            
             loadTreeView(); // refresh
           } catch (err) {
             console.error("Error adding file:", err);
+            showInfoMessage(`Failed to upload file: ${err}`, false);
           }
         } else {
         }
@@ -986,14 +994,23 @@ export function init(vaultIdParam) {
         alert(`Failed to open O365 file: ${err}`);
       }
     } else {
-      // Regular file - open local folder
+      // Regular file - download the file
       try {
-        await invoke("open_local_folder", {
-          fileId: parseInt(folderId, 10),
-          fileName: fileName
-        });
+        // Get the API URL
+        const apiUrl = window.__TAURI__?.core?.invoke ? 'http://127.0.0.1:5000' : '';
+        // Create a download URL for the file
+        const downloadUrl = `${apiUrl}/uploads/folders/${folderId}/${encodeURIComponent(fileName)}`;
+        
+        // Create a temporary anchor element to trigger the download
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = fileName;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       } catch (err) {
-        console.error("Failed to open folder:", err);
+        console.error("Failed to download file:", err);
       }
     }
   });
@@ -1057,8 +1074,8 @@ export function init(vaultIdParam) {
   }
 
   // General message display function (can be used for info messages)
-  function showInfoMessage(message) {
-    showDeleteMessage(message, true);
+  function showInfoMessage(message, isSuccess = true) {
+    showDeleteMessage(message, isSuccess);
   }
 
   document.querySelector('#delete-icon')?.addEventListener('click', onDeleteClicked);
@@ -1177,8 +1194,59 @@ export function init(vaultIdParam) {
     showInfoMessage("Go to vault and share permission of whole vault. We only support sharing at Vault granularity for now.");
   });
 
-  document.querySelector('#file-up-icon')?.addEventListener('click', () => {
-    showInfoMessage("To be implemented");
+  document.querySelector('#file-up-icon')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Check if a folder is selected
+    const selected = document.querySelector('.active-label');
+    if (!selected || !selected.classList.contains('folder-label')) {
+      showInfoMessage("Please select a folder first to add files");
+      return;
+    }
+    
+    // Get the folder ID from the selected folder
+    const folderId = parseInt(selected.dataset.folderId, 10);
+    if (!folderId) {
+      showInfoMessage("Invalid folder selection");
+      return;
+    }
+    
+    // Use Tauri to open file picker
+    (async () => {
+      try {
+        const filePath = await invoke("open_single_file_picker");
+        if (!filePath) {
+          // User cancelled the dialog
+          return;
+        }
+
+        // Extract just the filename from the full path
+        const fileName = filePath.split(/[\\/]/).pop();
+
+        // Read the file contents (using Node.js APIs through Tauri)
+        const fileContents = await invoke("read_file_as_base64", {
+          path: filePath
+        });
+
+        const userId = await invoke("get_current_user_id");
+        
+        await invoke("create_file_for_folder", {
+          name: fileName,
+          path: `/${folderId}/`,
+          folderId,
+          createdBy: userId,
+          createdByUser: "demo",
+          fileContentsBase64: fileContents,
+        });
+
+        loadTreeView(); // refresh the tree view to show the new file
+        showInfoMessage(`File "${fileName}" uploaded successfully`, true);
+      } catch (err) {
+        console.error("Error uploading file:", err);
+        showInfoMessage(`Failed to upload file: ${err}`, false);
+      }
+    })();
   });
 
   document.querySelector('#flip-backward-icon')?.addEventListener('click', () => {
@@ -1529,12 +1597,87 @@ export function init(vaultIdParam) {
       // Use Outlook icon for O365 files, regular file icon otherwise
       // Check if iso365File is true (handles undefined/null/false cases)
       const fileIcon = file.iso365File === true ? '../assets/outlook-icon.png' : '../assets/images/icon-file.svg';
-      fileLi.innerHTML = `
-          <div class="file-label" data-file-id="${file.id}" data-file-name="${file.name}" data-folder-id="${folderId}" ${file.iso365File === true ? 'data-is-o365="true"' : ''}>
-            <img src="${fileIcon}" class="tree-icon">
-            <span>${file.name}</span>
-          </div>
-        `;
+      
+      // Create a container div for the file with relative positioning
+      const fileContainer = document.createElement('div');
+      fileContainer.style.position = 'relative';
+      fileContainer.style.display = 'flex';
+      fileContainer.style.alignItems = 'center';
+      
+      // Create the file label
+      const fileLabel = document.createElement('div');
+      fileLabel.className = 'file-label';
+      fileLabel.setAttribute('data-file-id', file.id);
+      fileLabel.setAttribute('data-file-name', file.name);
+      fileLabel.setAttribute('data-folder-id', folderId);
+      if (file.iso365File === true) {
+        fileLabel.setAttribute('data-is-o365', 'true');
+      }
+      fileLabel.innerHTML = `
+        <img src="${fileIcon}" class="tree-icon">
+        <span>${file.name}</span>
+      `;
+      
+      // Create delete button
+      const deleteBtn = document.createElement('button');
+      deleteBtn.innerHTML = '×';
+      deleteBtn.className = 'delete-btn';
+      deleteBtn.style.cssText = `
+        position: absolute;
+        right: 0px;
+        top: -5px;
+        width: 16px;
+        height: 16px;
+        border: none;
+        background: rgba(255, 0, 0, 0.7);
+        color: white;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 12px;
+        line-height: 1;
+        display: none;
+        z-index: 10;
+        padding: 0;
+      `;
+      
+      // Show/hide delete button on hover
+      fileContainer.addEventListener('mouseenter', () => {
+        deleteBtn.style.display = 'block';
+      });
+      fileContainer.addEventListener('mouseleave', () => {
+        deleteBtn.style.display = 'none';
+      });
+      
+      // Delete button click handler
+      deleteBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        console.log('🗑️ Delete button clicked for file ID:', file.id);
+        
+        try {
+          await window.__TAURI__.core.invoke('delete_file', { 
+            fileId: file.id 
+          });
+          
+          console.log('✅ File deleted successfully');
+          
+          // Remove the file element from the DOM
+          fileLi.remove();
+          
+          // Show success message
+          showInfoMessage(`File "${file.name}" deleted successfully`, true);
+          
+          // Refresh the tree view to reflect the changes
+          loadTreeView();
+        } catch (error) {
+          console.error('❌ Failed to delete file:', error);
+          showInfoMessage(`Failed to delete file: ${error}`, false);
+        }
+      });
+      
+      // Append elements
+      fileContainer.appendChild(fileLabel);
+      fileContainer.appendChild(deleteBtn);
+      fileLi.appendChild(fileContainer);
       container.appendChild(fileLi);
     });
   }

@@ -228,7 +228,10 @@ export async function init(page, container) {
             
             // Refresh the task list to show the new task
             try {
-              const updatedTasks = await invoke("fetch_tasks_for_workspace", { workspaceId: currentPage.workspaceId });
+              const allWorkspaceTasks = await invoke("fetch_tasks_for_workspace", { workspaceId: currentPage.workspaceId });
+              // Filter tasks to only show tasks for the current page
+              const currentPageIdNum = Number(currentPage.id);
+              const updatedTasks = allWorkspaceTasks.filter(task => Number(task.pageId) === currentPageIdNum);
               relevantTasks = updatedTasks;
               renderTasks(relevantTasks);
               
@@ -437,9 +440,19 @@ export async function init(page, container) {
               });
               console.log('✅ Note deleted successfully');
               
-              // Reload page data to reflect changes
-              if (window.reloadCurrentPageData) {
+              // Find and remove the note element from DOM immediately for better UX
+              const noteElement = container.querySelector(`.draggable-item[data-id="${window.currentNoteToDelete}"]`);
+              if (noteElement) {
+                noteElement.remove();
+                console.log('🗑️ Note element removed from DOM');
+              }
+              
+              // Then try to reload page data to reflect changes in other views
+              if (typeof window.reloadCurrentPageData === 'function') {
+                console.log('🔄 Calling reloadCurrentPageData to refresh UI');
                 await window.reloadCurrentPageData();
+              } else {
+                console.log('ℹ️ No reloadCurrentPageData function available');
               }
               
               showMessage("Note deleted successfully", 'success');
@@ -488,9 +501,19 @@ export async function init(page, container) {
               }
               console.log('✅ Image deleted successfully');
               
-              // Reload page data to reflect changes
-              if (window.reloadCurrentPageData) {
+              // Find and remove the image element from DOM immediately for better UX
+              const imageElement = container.querySelector(`.draggable-item[data-id="${window.currentImageToDelete}"]`);
+              if (imageElement) {
+                imageElement.remove();
+                console.log('🗑️ Image element removed from DOM');
+              }
+              
+              // Then try to reload page data to reflect changes in other views
+              if (typeof window.reloadCurrentPageData === 'function') {
+                console.log('🔄 Calling reloadCurrentPageData to refresh UI');
                 await window.reloadCurrentPageData();
+              } else {
+                console.log('ℹ️ No reloadCurrentPageData function available');
               }
               
               showMessage("Image deleted successfully", 'success');
@@ -1014,7 +1037,12 @@ export async function init(page, container) {
         }
         
         console.log('📋 Fetching tasks for workspace ID:', currentPage.workspaceId);
-        tasks = await invoke("fetch_tasks_for_workspace", { workspaceId: currentPage.workspaceId });
+        const allWorkspaceTasks = await invoke("fetch_tasks_for_workspace", { workspaceId: currentPage.workspaceId });
+        // Filter tasks to only show tasks for the current page
+        const currentPageIdNum = Number(currentPage.id);
+        tasks = allWorkspaceTasks.filter(task => Number(task.pageId) === currentPageIdNum);
+        console.log('📋 Filtered tasks for page', currentPageIdNum, ':', tasks.length, 'out of', allWorkspaceTasks.length, 'total workspace tasks');
+        
         notes = await invoke("fetch_textbox_for_page", { pageId: currentPage.id });
         images = await invoke("fetch_images_for_page", { pageId: currentPage.id });
         cards = await invoke("fetch_cards_for_page", { pageId: currentPage.id });
@@ -1121,7 +1149,12 @@ export async function init(page, container) {
     window.currentWorkspaceId = currentPage.workspaceId;
     
     console.log('📋 Fetching tasks for workspace ID:', currentPage.workspaceId);
-    tasks = await invoke("fetch_tasks_for_workspace", { workspaceId: currentPage.workspaceId });
+    const allWorkspaceTasks = await invoke("fetch_tasks_for_workspace", { workspaceId: currentPage.workspaceId });
+    // Filter tasks to only show tasks for the current page
+    const currentPageIdNum = Number(currentPage.id);
+    tasks = allWorkspaceTasks.filter(task => Number(task.pageId) === currentPageIdNum);
+    console.log('📋 Filtered tasks for page', currentPageIdNum, ':', tasks.length, 'out of', allWorkspaceTasks.length, 'total workspace tasks');
+    
     notes = await invoke("fetch_textbox_for_page", { pageId: currentPage.id });
     const users = await invoke("get_users_for_vault",{ vaultId: currentPage.vaultId});
     cards = await invoke("fetch_cards_for_page", { pageId: currentPage.id });
@@ -1480,6 +1513,26 @@ if (addTaskBtn) {
     modal.classList.remove("hidden");
   });
 }
+
+// Add click event listener for creating notes on empty whitespace
+const pageBlocksContainer = container.querySelector("#page-blocks-container");
+if (pageBlocksContainer) {
+  pageBlocksContainer.addEventListener("click", async (e) => {
+    // Only create note if clicking directly on the container (empty space)
+    if (e.target === pageBlocksContainer) {
+      console.log('📝 Creating note from empty space click');
+      try {
+        // Use current page (for tab switching) or fallback to original page
+        const currentPage = window.currentPage || page;
+        console.log('📝 Creating note for current page:', currentPage.name, '- Page ID:', currentPage.id);
+        await addEmptyNoteToPage(currentPage.id, container);
+      } catch (error) {
+        console.error('❌ Failed to create note from click:', error);
+        showMessage('Failed to create note', 'error');
+      }
+    }
+  });
+}
 document.addEventListener("contextmenu", (e) => {
   const card = e.target.closest(".task-card");
   if (card) {
@@ -1628,7 +1681,10 @@ async function handleUpdateTask(task) {
       
               // Refresh the task list to show the updated task
         try {
-          const updatedTasks = await invoke("fetch_tasks_for_workspace", { workspaceId: currentPage.workspaceId });
+          const allWorkspaceTasks = await invoke("fetch_tasks_for_workspace", { workspaceId: currentPage.workspaceId });
+          // Filter tasks to only show tasks for the current page
+          const currentPageIdNum = Number(currentPage.id);
+          const updatedTasks = allWorkspaceTasks.filter(task => Number(task.pageId) === currentPageIdNum);
           relevantTasks = updatedTasks;
           renderTasks(relevantTasks);
           console.log('✅ Refreshed task list after update for workspace:', currentPage.workspaceId);
@@ -2578,7 +2634,10 @@ if (!col.required) {
           
           // Refresh the task list to show the updated list
           try {
-            const updatedTasks = await invoke("fetch_tasks_for_workspace", { workspaceId: currentPage.workspaceId });
+            const allWorkspaceTasks = await invoke("fetch_tasks_for_workspace", { workspaceId: currentPage.workspaceId });
+            // Filter tasks to only show tasks for the current page
+            const currentPageIdNum = Number(currentPage.id);
+            const updatedTasks = allWorkspaceTasks.filter(task => Number(task.pageId) === currentPageIdNum);
             relevantTasks = updatedTasks;
             renderTasks(relevantTasks);
             console.log('✅ Refreshed task list after deletion for workspace:', currentPage.workspaceId);
@@ -3439,9 +3498,15 @@ if (!col.required) {
                 });
                 console.log('✅ Note deleted successfully');
                 
-                // Reload page data to reflect changes
-                if (window.reloadCurrentPageData) {
+                // Remove the note element from DOM immediately for better UX
+                block.remove();
+                
+                // Then try to reload page data to reflect changes in other views
+                if (typeof window.reloadCurrentPageData === 'function') {
+                  console.log('🔄 Calling reloadCurrentPageData to refresh UI');
                   await window.reloadCurrentPageData();
+                } else {
+                  console.log('ℹ️ No reloadCurrentPageData function available, note already removed from DOM');
                 }
                 
                 // Show success message
@@ -3647,9 +3712,15 @@ if (!col.required) {
                 
                 console.log('✅ Image deleted successfully');
                 
-                // Reload page data to reflect changes
-                if (window.reloadCurrentPageData) {
+                // Remove the image element from DOM immediately for better UX
+                block.remove();
+                
+                // Then try to reload page data to reflect changes in other views
+                if (typeof window.reloadCurrentPageData === 'function') {
+                  console.log('🔄 Calling reloadCurrentPageData to refresh UI');
                   await window.reloadCurrentPageData();
+                } else {
+                  console.log('ℹ️ No reloadCurrentPageData function available, image already removed from DOM');
                 }
                 
                 // Show success message
@@ -3762,9 +3833,18 @@ if (!col.required) {
                   fileId: item.id 
                 });
                 
-                console.log('✅ File deleted successfully, reloading page blocks');
-                // Reload the page data to refresh the display
-                reloadPageData();
+                console.log('✅ File deleted successfully');
+                
+                // Remove the file element from DOM immediately for better UX
+                block.remove();
+                
+                // Then try to reload page data to reflect changes in other views
+                if (typeof reloadPageData === 'function') {
+                  console.log('🔄 Calling reloadPageData to refresh UI');
+                  reloadPageData();
+                } else {
+                  console.log('ℹ️ No reloadPageData function available, file already removed from DOM');
+                }
               } catch (error) {
                 console.error('❌ Failed to delete file:', error);
               }
@@ -3910,12 +3990,119 @@ if (!col.required) {
         console.log('✅ Note created:', created);
       
         const block = document.createElement("div");
-        block.classList.add("page-block");
+        block.classList.add("page-block", "draggable");
         block.setAttribute("data-type", "note");
         block.setAttribute("data-id", created.id);
       
+        // Create note container
+        const noteContainer = document.createElement("div");
+        noteContainer.style.position = "relative";
+        
+        // Create delete button for note
+        const deleteBtn = document.createElement("button");
+        deleteBtn.innerHTML = "×";
+        deleteBtn.className = "delete-btn";
+        deleteBtn.style.cssText = `
+          position: absolute;
+          top: 5px;
+          right: 5px;
+          width: 20px;
+          height: 20px;
+          border: none;
+          background: rgba(255, 0, 0, 0.7);
+          color: white;
+          border-radius: 50%;
+          cursor: pointer;
+          font-size: 14px;
+          line-height: 1;
+          display: none;
+          z-index: 10;
+        `;
+        
+        // Show/hide delete button on hover
+        block.addEventListener("mouseenter", () => {
+          console.log('🖱️ Mouse entered note block, showing delete button for note:', created.id);
+          deleteBtn.style.display = "block";
+        });
+        block.addEventListener("mouseleave", () => {
+          if (!block.classList.contains("editing")) {
+            console.log('🖱️ Mouse left note block, hiding delete button for note:', created.id);
+            deleteBtn.style.display = "none";
+          }
+        });
+        
+        // Delete button click handler
+        deleteBtn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          console.log('🗑️ Delete button clicked for note ID:', created.id);
+          
+          try {
+            console.log('🗑️ Deleting note with ID:', created.id);
+            await window.__TAURI__.core.invoke("delete_textbox", { 
+              textboxId: created.id 
+            });
+            console.log('✅ Note deleted successfully');
+            
+            // Remove the note element from DOM immediately for better UX
+            block.remove();
+            
+            // Then try to reload page data to reflect changes in other views
+            if (typeof window.reloadCurrentPageData === 'function') {
+              console.log('🔄 Calling reloadCurrentPageData to refresh UI');
+              await window.reloadCurrentPageData();
+            } else {
+              console.log('ℹ️ No reloadCurrentPageData function available, note already removed from DOM');
+            }
+            
+            // Show success message
+            const messageEl = containerEl.querySelector('#page-message');
+            if (messageEl) {
+              messageEl.textContent = "Note deleted successfully";
+              messageEl.classList.remove('success', 'error', 'info', 'hidden');
+              messageEl.classList.add('success');
+              setTimeout(() => messageEl.classList.add('hidden'), 3000);
+            }
+          } catch (error) {
+            console.error('❌ Failed to delete note:', error);
+            
+            // Check if it's a 404 error (note doesn't exist) - treat as success
+            if (error.toString().includes('404') || error.toString().includes('Not Found')) {
+              console.log('🔄 Note not found on server, but continuing with local cleanup');
+              
+              // Reload page data anyway to clean up UI
+              if (window.reloadCurrentPageData) {
+                await window.reloadCurrentPageData();
+              }
+              
+              // Show success message for 404
+              const messageEl = containerEl.querySelector('#page-message');
+              if (messageEl) {
+                messageEl.textContent = "Note removed successfully";
+                messageEl.classList.remove('success', 'error', 'info', 'hidden');
+                messageEl.classList.add('success');
+                setTimeout(() => messageEl.classList.add('hidden'), 3000);
+              }
+            } else {
+              // Show error message for other errors
+              const messageEl = containerEl.querySelector('#page-message');
+              if (messageEl) {
+                messageEl.textContent = `Failed to delete note: ${error}`;
+                messageEl.classList.remove('success', 'error', 'info', 'hidden');
+                messageEl.classList.add('error');
+                setTimeout(() => messageEl.classList.add('hidden'), 3000);
+              }
+            }
+          }
+        });
+        
+        // Add identifier for debugging
+        deleteBtn.setAttribute('data-note-id', created.id);
+        console.log('✅ Direct event listener added to delete button for note:', created.id);
+        
         const editorDiv = document.createElement("div");
-        block.appendChild(editorDiv);
+        noteContainer.appendChild(editorDiv);
+        noteContainer.appendChild(deleteBtn);
+        block.appendChild(noteContainer);
         containerEl.appendChild(block);
       
         const quill = new Quill(editorDiv, {
@@ -3965,6 +4152,7 @@ if (!col.required) {
           if (range === null && oldRange !== null) {
             quill.enable(false);
             block.classList.remove("editing");
+            deleteBtn.style.display = "block"; // Keep delete button visible while editing
       
             // Save the text content, not HTML
             const newText = quill.getText().trim();

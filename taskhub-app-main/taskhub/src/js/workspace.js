@@ -95,9 +95,15 @@ window.renderNewFileInWorkspace = function(file, pageId) {
       
       console.log('✅ File deleted successfully');
       
-      // Reload page data to reflect changes
-      if (window.reloadCurrentPageData) {
+      // Remove the file element from DOM immediately for better UX
+      fileDiv.remove();
+      
+      // Then try to reload page data to reflect changes in other views
+      if (typeof window.reloadCurrentPageData === 'function') {
+        console.log('🔄 Calling reloadCurrentPageData to refresh UI');
         await window.reloadCurrentPageData();
+      } else {
+        console.log('ℹ️ No reloadCurrentPageData function available, file already removed from DOM');
       }
     } catch (error) {
       console.error('❌ Failed to delete file:', error);
@@ -902,7 +908,7 @@ if (workspaceFolder) {
       
       // Fetch data for this specific page with individual loading states
       showPageLoadingOverlay('Loading...');
-      const tasks = await window.__TAURI__.core.invoke("fetch_tasks_for_page", { pageId: page.id });
+      const tasks = await window.__TAURI__.core.invoke("fetch_tasks_for_workspace", { workspaceId: page.workspaceId });
       
       showPageLoadingOverlay('Loading...');
       const notes = await window.__TAURI__.core.invoke("fetch_textbox_for_page", { pageId: page.id });
@@ -935,12 +941,18 @@ if (workspaceFolder) {
         files: files.length
       });
       
-      // Use manual reload to ensure page-scoped rendering
-      await manualPageReload(page, pageWrapper, tasks, notes, images, cards, files);
-      
-      // Set up task listeners for the switched page
-      console.log('🔧 Setting up task listeners for switched page:', page.name);
-      setupTaskListenersIndependently(page, pageWrapper);
+      // Use the proper page.js reload function for consistent functionality
+      if (window.reloadCurrentPageData) {
+        console.log('🔄 Using page.js reloadCurrentPageData for:', page.name);
+        await window.reloadCurrentPageData();
+      } else {
+        console.log('⚠️ window.reloadCurrentPageData not available, falling back to manual reload');
+        await manualPageReload(page, pageWrapper, tasks, notes, images, cards, files);
+        
+        // Set up task listeners for the switched page
+        console.log('🔧 Setting up task listeners for switched page:', page.name);
+        setupTaskListenersIndependently(page, pageWrapper);
+      }
       
       // Hide loading overlay
       hidePageLoadingOverlay();
