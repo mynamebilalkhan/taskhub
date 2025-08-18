@@ -52,7 +52,6 @@ window.renderNewFileInWorkspace = function(file, pageId) {
   fileContainer.style.border = '1px solid #e5e7eb';
   fileContainer.style.borderRadius = '8px';
   fileContainer.style.background = '#f9fafb';
-  fileContainer.style.marginBottom = '8px';
   
   // Create delete button
   const deleteBtn = document.createElement('button');
@@ -115,9 +114,28 @@ window.renderNewFileInWorkspace = function(file, pageId) {
   fileContent.style.display = 'flex';
   fileContent.style.alignItems = 'center';
   
+  // Get file extension and determine appropriate icon
+  const getFileIcon = (fileName) => {
+    const extension = fileName.split('.').pop().toLowerCase();
+    const iconMap = {
+      'pdf': '../assets/images/pdf.png',
+      'txt': '../assets/images/txt.png',
+      'doc': '../assets/images/doc.png',
+      'docx': '../assets/images/docx.png',
+      'xls': '../assets/images/xls.png',
+      'xlsx': '../assets/images/xls.png'
+    };
+    return iconMap[extension] || '../assets/images/icon-file.svg';
+  };
+  
+  // Apply secure filename logic to match backend's secure_filename() function
+  const secureFileName = file.name.replace(/\s+/g, '_').replace(/[^\w\s.-]/g, '');
+  console.log('🔧 Workspace file download - Original filename:', file.name);
+  console.log('🔧 Workspace file download - Secured filename:', secureFileName);
+  
   // Add file icon and content using innerHTML for consistency with dashboard.js
   fileContent.innerHTML = `
-    <img src="../assets/images/icon-file.svg" style="width: 24px; height: 24px; margin-right: 12px;">
+    <img src="${getFileIcon(file.name)}" style="width: 50px; height: 50px; margin-right: 12px;">
     <div style="flex: 1;">
       <div style="font-weight: 500; color: #1f2937;">${file.name}</div>
       <div style="font-size: 12px; color: #6b7280;">
@@ -125,11 +143,21 @@ window.renderNewFileInWorkspace = function(file, pageId) {
         ${file.createdByUser ? `• by ${file.createdByUser}` : ''}
       </div>
     </div>
-    <a href="${window.getFileDownloadUrl ? window.getFileDownloadUrl(file, pageId) : `${window.__TAURI__?.core?.invoke ? 'http://127.0.0.1:5000' : ''}/uploads/${pageId}/${encodeURIComponent(file.name)}`}" download="${file.name}" target="_blank" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-block; text-align: center;">
+    <button class="download-btn" data-file-name="${file.name}" data-file-url="${window.getFileDownloadUrl ? window.getFileDownloadUrl(file, pageId) : `${window.__TAURI__?.core?.invoke ? 'http://127.0.0.1:5000' : ''}/uploads/${pageId}/${encodeURIComponent(secureFileName)}`}" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-block; text-align: center;">
       Download
-    </a>
+    </button>
   `;
   
+  // Add download button event listener
+  const downloadBtn = fileContent.querySelector('.download-btn');
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      showSaveFileModal(downloadBtn.dataset.fileName, downloadBtn.dataset.fileUrl);
+    });
+  }
+
   // Append elements
   fileContainer.appendChild(fileContent);
   fileContainer.appendChild(deleteBtn);
@@ -401,6 +429,9 @@ if (workspaceFolder) {
     </div> 
     `;
     initSidebarToggle();
+    
+    // Initialize workspace FAB menu
+    initWorkspaceFAB(container);
     
     // Open the global FAB menu when the workspace FAB button is clicked
     const openWorkspaceFabButton = container.querySelector("#open-workspace-fab-menu");
@@ -1344,6 +1375,103 @@ if (workspaceFolder) {
         const currentlyHidden = targetElement.classList.contains('hidden');
         updateUI(!currentlyHidden);
     });
+
+    // Save File Modal functionality
+    function showSaveFileModal(fileName, fileUrl) {
+        const modal = document.getElementById('save-file-modal');
+        const fileNameElement = document.getElementById('save-file-name');
+        const chooseLocationBtn = document.getElementById('choose-location');
+        const cancelBtn = document.getElementById('save-file-cancel-btn');
+        const closeBtn = document.getElementById('save-file-close-btn');
+
+        if (!modal || !fileNameElement) {
+            console.error('Save file modal elements not found');
+            return;
+        }
+
+        // Set file name
+        fileNameElement.textContent = fileName;
+
+        // Show modal
+        modal.classList.remove('hidden');
+
+        // Remove existing event listeners to prevent duplicates
+        const newChooseLocationBtn = chooseLocationBtn.cloneNode(true);
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        const newCloseBtn = closeBtn.cloneNode(true);
+
+        chooseLocationBtn.parentNode.replaceChild(newChooseLocationBtn, chooseLocationBtn);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+
+        // Choose Location handler
+        newChooseLocationBtn.addEventListener('click', async () => {
+            try {
+                if (window.__TAURI__?.core?.invoke) {
+                    // Use Tauri save dialog
+                    const savePath = await window.__TAURI__.core.invoke('save_file_dialog', { fileName: fileName });
+                    
+                    if (savePath) {
+                        const success = await window.__TAURI__.core.invoke('download_file_to_location', {
+                            fileUrl: fileUrl,
+                            savePath: savePath
+                        });
+                        
+                        if (success) {
+                            console.log(`File saved to: ${savePath}`);
+                            alert(`File saved successfully to: ${savePath}`);
+                        } else {
+                            console.error('Failed to save file to chosen location');
+                            alert('Failed to save file. Please try again.');
+                        }
+                    } else {
+                        console.log('Save operation cancelled by user');
+                    }
+                } else {
+                    // Fallback for web environment
+                    const a = document.createElement('a');
+                    a.href = fileUrl;
+                    a.download = fileName;
+                    a.target = '_blank';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    console.log('Download initiated for:', fileName);
+                }
+            } catch (error) {
+                console.error('Error choosing save location:', error);
+                alert('Failed to save file. Please try again.');
+            }
+            modal.classList.add('hidden');
+        });
+
+        // Cancel and Close handlers
+        const closeModal = () => {
+            modal.classList.add('hidden');
+        };
+
+        newCancelBtn.addEventListener('click', closeModal);
+        newCloseBtn.addEventListener('click', closeModal);
+
+        // Close modal when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Close modal on Escape key
+        const handleKeyPress = (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', handleKeyPress);
+            }
+        };
+        document.addEventListener('keydown', handleKeyPress);
+    }
+    
+    // Make showSaveFileModal globally accessible
+    window.showSaveFileModal = showSaveFileModal;
 }
 
   // Enable drag and drop functionality for page blocks
@@ -1432,8 +1560,163 @@ if (workspaceFolder) {
   
 }
 
+// FAB menu functionality for workspace
+function initWorkspaceFAB(container) {
+  const workspaceFab = container.querySelector('#workspace-fab');
+  const workspaceFabMenu = container.querySelector('#workspace-fab-menu');
+  
+  if (!workspaceFab || !workspaceFabMenu) {
+    console.warn('Workspace FAB elements not found');
+    return;
+  }
+  
+  // Show FAB button
+  workspaceFab.classList.remove('hidden');
+  
+  // FAB button click handler
+  workspaceFab.addEventListener('click', (e) => {
+    e.stopPropagation();
+    workspaceFabMenu.classList.toggle('hidden');
+  });
+  
+  // Hide menu when clicking outside
+  document.addEventListener('click', (e) => {
+    const clickedFab = e.target.closest('#workspace-fab');
+    const clickedMenu = e.target.closest('#workspace-fab-menu');
+    
+    if (!clickedFab && !clickedMenu) {
+      workspaceFabMenu.classList.add('hidden');
+    }
+  });
+  
+  // FAB menu item click handler
+  workspaceFabMenu.addEventListener('click', async (e) => {
+    const item = e.target.closest('.fab-item');
+    if (!item) return;
+    
+    // Close the menu
+    workspaceFabMenu.classList.add('hidden');
+    
+    const action = item.dataset.fabAction;
+    await handleWorkspaceFabAction(action, container);
+  });
+}
+
+// Handle FAB menu actions in workspace context
+async function handleWorkspaceFabAction(action, container) {
+  try {
+    switch (action) {
+      case 'file':
+        await addFileToWorkspace(container);
+        break;
+      case 'image':
+        await addImageToWorkspace(container);
+        break;
+      case 'note':
+        await addNoteToWorkspace(container);
+        break;
+      case 'tasklist':
+        await addTaskToWorkspace(container);
+        break;
+      case 'card':
+        await addCardToWorkspace(container);
+        break;
+      default:
+        console.warn('Unknown FAB action:', action);
+    }
+  } catch (error) {
+    console.error('Error handling FAB action:', action, error);
+  }
+}
+
+// Add file to workspace
+async function addFileToWorkspace(container) {
+  try {
+    // Get current page ID from the active workspace tab
+    const activePageTab = container.querySelector('.workspace-tab.active');
+    const pageId = activePageTab ? parseInt(activePageTab.dataset.pageId) : null;
+    
+    if (!pageId) {
+      console.warn('No active page found for file upload');
+      return;
+    }
+    
+    // Use Tauri file picker
+    const filePath = await window.__TAURI__.core.invoke('open_single_file_picker');
+    if (!filePath) {
+      return; // User cancelled
+    }
+    
+    // Extract filename
+    const fileName = filePath.split(/[\\/]/).pop() ?? '';
+    
+    // File type validation
+    const allowedExtensions = ['pdf', 'xlsx', 'doc', 'docx', 'txt'];
+    const fileExtension = fileName.split('.').pop().toLowerCase();
+    if (!allowedExtensions.includes(fileExtension)) {
+      alert('Please select a valid file type: pdf, xlsx, doc, docx, txt');
+      return;
+    }
+    
+    console.log('Uploading file to workspace:', fileName, 'for page:', pageId);
+    
+    // Upload file using Tauri command
+    const result = await window.__TAURI__.core.invoke('upload_file', {
+      filePath: filePath,
+      fileName: fileName,
+      pageId: pageId.toString(),
+      workspaceId: window.currentPage?.workspaceId?.toString() || null
+    });
+    
+    if (!result) {
+      throw new Error('Upload failed');
+    }
+    
+    // Create file object
+    const fileObject = {
+      id: result.id || result.fileId || Date.now(),
+      name: fileName,
+      path: result.path || filePath,
+      createdDateTime: new Date().toISOString(),
+      createdByUser: window.currentUser?.displayName || 'You'
+    };
+    
+    // Render the new file in workspace
+    if (window.renderNewFileInWorkspace) {
+      window.renderNewFileInWorkspace(fileObject, pageId);
+    }
+    
+    console.log('File uploaded successfully to workspace:', fileName);
+    
+  } catch (error) {
+    console.error('Error uploading file to workspace:', error);
+    alert('Failed to upload file: ' + error.message);
+  }
+}
+
+// Placeholder functions for other FAB actions
+async function addImageToWorkspace(container) {
+  console.log('Add image to workspace - not implemented yet');
+}
+
+async function addNoteToWorkspace(container) {
+  console.log('Add note to workspace - not implemented yet');
+}
+
+async function addTaskToWorkspace(container) {
+  console.log('Add task to workspace - not implemented yet');
+}
+
+async function addCardToWorkspace(container) {
+  console.log('Add card to workspace - not implemented yet');
+}
+
 window.logout = () => {
   localStorage.removeItem('authToken');
   localStorage.removeItem('user');
   window.location.href = 'index.html';
 };
+
+// Export the init function for FAB
+// Save File Modal functionality
+window.initWorkspaceFAB = initWorkspaceFAB;

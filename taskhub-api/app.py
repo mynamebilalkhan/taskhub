@@ -95,6 +95,12 @@ def download_file(pageId, filename):
     upload_folder = os.path.join('uploads', pageId)
     return send_from_directory(upload_folder, filename)
 
+# Route to serve files from folders
+@app.route('/uploads/folders/<path:folderId>/<path:filename>')
+def download_folder_file(folderId, filename):
+    upload_folder = os.path.join('uploads', 'folders', folderId)
+    return send_from_directory(upload_folder, filename)
+
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)
 

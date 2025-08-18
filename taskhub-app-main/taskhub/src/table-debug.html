@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table Debug Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/quill-better-table@1.2.10/dist/quill-better-table.min.css" rel="stylesheet">
+    <style>
+        .container { max-width: 800px; margin: 50px auto; padding: 20px; }
+        .editor { height: 300px; margin: 20px 0; }
+        .debug-info { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .table-picker {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        .table-picker-row { display: flex; }
+        .table-picker-cell {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            margin: 1px;
+        }
+        .table-picker-cell:hover,
+        .table-picker-cell.active {
+            background-color: #0084ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Table Debug Test</h1>
+        <div class="debug-info" id="debug-info">
+            <h3>Debug Information:</h3>
+            <div id="debug-output">Loading...</div>
+        </div>
+        
+        <div class="editor" id="editor"></div>
+        
+        <button onclick="testTableInsertion()">Test Table Insertion</button>
+        <button onclick="checkModules()">Check Modules</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill-better-table@1.2.10/dist/quill-better-table.min.js"></script>
+    
+    <script>
+        let quill;
+        
+        function updateDebugInfo(message) {
+            const debugOutput = document.getElementById('debug-output');
+            debugOutput.innerHTML += '<br>' + message;
+            console.log(message);
+        }
+        
+        function checkModules() {
+            updateDebugInfo('=== Module Check ===');
+            updateDebugInfo('Quill available: ' + (typeof Quill !== 'undefined'));
+            updateDebugInfo('quillBetterTable available: ' + (typeof quillBetterTable !== 'undefined'));
+            
+            if (quill) {
+                try {
+                    const betterTable = quill.getModule('better-table');
+                    updateDebugInfo('better-table module: ' + (betterTable ? 'Available' : 'Not available'));
+                    if (betterTable) {
+                        updateDebugInfo('insertTable function: ' + (typeof betterTable.insertTable === 'function'));
+                    }
+                } catch (e) {
+                    updateDebugInfo('Error getting better-table module: ' + e.message);
+                }
+            }
+        }
+        
+        function testTableInsertion() {
+            if (!quill) {
+                updateDebugInfo('Quill not initialized');
+                return;
+            }
+            
+            try {
+                const betterTable = quill.getModule('better-table');
+                if (betterTable && typeof betterTable.insertTable === 'function') {
+                    betterTable.insertTable(3, 3);
+                    updateDebugInfo('Table insertion successful!');
+                } else {
+                    updateDebugInfo('Table insertion failed - module not available');
+                }
+            } catch (e) {
+                updateDebugInfo('Table insertion error: ' + e.message);
+            }
+        }
+        
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDebugInfo('DOM loaded, initializing...');
+            
+            // Register the module
+            if (typeof Quill !== 'undefined' && typeof quillBetterTable !== 'undefined') {
+                updateDebugInfo('Registering quill-better-table module...');
+                Quill.register({
+                    'modules/better-table': quillBetterTable
+                }, true);
+                updateDebugInfo('Module registered successfully');
+            } else {
+                updateDebugInfo('ERROR: Quill or quillBetterTable not available');
+                updateDebugInfo('Quill: ' + typeof Quill);
+                updateDebugInfo('quillBetterTable: ' + typeof quillBetterTable);
+            }
+            
+            // Initialize Quill
+            try {
+                quill = new Quill('#editor', {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [['bold', 'italic'], ['clean']],
+                        'better-table': {
+                            operationMenu: {
+                                items: {
+                                    unmergeCells: { text: 'Unmerge cells' }
+                                }
+                            }
+                        },
+                        keyboard: {
+                            bindings: quillBetterTable.keyboardBindings
+                        }
+                    }
+                });
+                updateDebugInfo('Quill initialized successfully');
+                
+                // Check modules after initialization
+                setTimeout(checkModules, 100);
+                
+            } catch (e) {
+                updateDebugInfo('Quill initialization error: ' + e.message);
+            }
+        });
+    </script>
+</body>
+</html>

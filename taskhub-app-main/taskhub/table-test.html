@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Table Test</title>
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/quill-better-table@1.2.10/dist/quill-better-table.min.css" rel="stylesheet">
+    <style>
+        #editor { height: 300px; }
+        .table-picker {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 5px;
+            z-index: 1000;
+        }
+        .table-picker-row { display: flex; }
+        .table-picker-cell {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #ddd;
+            margin: 1px;
+            cursor: pointer;
+            background: #f9f9f9;
+        }
+        .table-picker-cell.active { background: #007bff; }
+    </style>
+</head>
+<body>
+    <div id="editor"></div>
+    <button id="table-btn">Insert Table</button>
+    <div id="table-picker" class="table-picker"></div>
+
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill-better-table@1.2.10/dist/quill-better-table.min.js"></script>
+    <script>
+        // Register the module
+        Quill.register({
+            'modules/better-table': quillBetterTable
+        }, true);
+
+        // Initialize Quill with better-table
+        const quill = new Quill('#editor', {
+            theme: 'snow',
+            modules: {
+                'better-table': {
+                    operationMenu: {
+                        items: {
+                            unmergeCells: { text: 'Unmerge cells' }
+                        }
+                    }
+                },
+                keyboard: {
+                    bindings: quillBetterTable.keyboardBindings
+                }
+            }
+        });
+
+        // Create table picker
+        const picker = document.getElementById('table-picker');
+        const tableBtn = document.getElementById('table-btn');
+
+        // Create 5x5 grid
+        for (let r = 0; r < 5; r++) {
+            const row = document.createElement('div');
+            row.classList.add('table-picker-row');
+            for (let c = 0; c < 5; c++) {
+                const cell = document.createElement('div');
+                cell.classList.add('table-picker-cell');
+                cell.dataset.rows = r + 1;
+                cell.dataset.cols = c + 1;
+
+                cell.addEventListener('mouseover', () => {
+                    picker.querySelectorAll('.table-picker-cell').forEach(el => {
+                        const rows = +el.dataset.rows;
+                        const cols = +el.dataset.cols;
+                        if (rows <= r + 1 && cols <= c + 1) {
+                            el.classList.add('active');
+                        } else {
+                            el.classList.remove('active');
+                        }
+                    });
+                });
+
+                cell.addEventListener('click', () => {
+                    console.log(`Inserting ${r + 1}x${c + 1} table`);
+                    const betterTable = quill.getModule('better-table');
+                    console.log('Better table module:', betterTable);
+                    
+                    if (betterTable && betterTable.insertTable) {
+                        betterTable.insertTable(r + 1, c + 1);
+                    } else {
+                        console.log('Using fallback method');
+                        // Fallback method
+                        const range = quill.getSelection() || { index: 0 };
+                        let tableHTML = '<table><tbody>';
+                        for (let row = 0; row < r + 1; row++) {
+                            tableHTML += '<tr>';
+                            for (let col = 0; col < c + 1; col++) {
+                                tableHTML += '<td><br></td>';
+                            }
+                            tableHTML += '</tr>';
+                        }
+                        tableHTML += '</tbody></table><p><br></p>';
+                        quill.clipboard.dangerouslyPasteHTML(range.index, tableHTML);
+                    }
+                    picker.style.display = 'none';
+                });
+
+                row.appendChild(cell);
+            }
+            picker.appendChild(row);
+        }
+
+        // Show/hide picker
+        tableBtn.addEventListener('click', () => {
+            picker.style.display = picker.style.display === 'block' ? 'none' : 'block';
+        });
+
+        // Hide when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#table-btn') && !e.target.closest('#table-picker')) {
+                picker.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

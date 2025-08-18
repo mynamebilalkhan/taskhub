@@ -60,7 +60,7 @@
 
     <!-- PAGE BLOCKS CONTAINER (Notes and Images) -->
     <div id="page-blocks-container" class="page-blocks-container"></div>
-    
+
     <!-- Floating Action Button for Cards -->
     <div class="fab-container">
       <button class="fab-button" id="add-card-fab" title="Add Card">
@@ -262,5 +262,37 @@
         <button id="delete-image-confirmation-delete-btn" class="btn-danger">Delete</button>
       </div>
     </div>
+  </div>
+
+  <!-- Save File Modal -->
+  <div id="save-file-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Save File</h2>
+        <button id="save-file-close-btn" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Choose where to save the file:</p>
+        <div class="file-info">
+          <strong id="save-file-name"></strong>
+        </div>
+        <div class="save-options">
+          <button id="choose-location" class="btn-primary">Choose Location</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="save-file-cancel-btn" class="btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAB Menu for Workspace -->
+  <button class="fab hidden" id="workspace-fab">+</button>
+  <div class="fab-menu hidden" id="workspace-fab-menu">
+    <button class="fab-item" data-fab-action="tasklist">Task List</button>
+    <button class="fab-item" data-fab-action="card">Card</button>
+    <button class="fab-item" data-fab-action="image">Image</button>
+    <button class="fab-item" data-fab-action="note">Note</button>
+    <button class="fab-item" data-fab-action="file">Upload File</button>
   </div>
 </div>

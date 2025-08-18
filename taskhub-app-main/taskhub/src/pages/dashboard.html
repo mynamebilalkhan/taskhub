@@ -46,7 +46,7 @@
         <div id="tabs-bar" class="tabs-bar"></div>
         <!-- Tab content -->
         <div id="tabs-content" class="tabs-content"></div>
-        
+
         <!-- Loading overlay -->
         <div id="dashboard-loading-overlay" class="dashboard-loading-overlay hidden">
             <div class="loading-content">
@@ -238,4 +238,27 @@
     </div>
 </div>
 <input type="file" id="file-picker" style="display:none;" />
+
+<!-- Save File Modal -->
+<div id="save-file-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Save File</h2>
+            <button id="save-file-close-btn" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Choose where to save the file:</p>
+            <div class="file-info">
+                <strong id="save-file-name"></strong>
+            </div>
+            <div class="save-options">
+                <button id="choose-location" class="btn-primary">Choose Location</button>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="save-file-cancel-btn" class="btn-secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+
 </div>

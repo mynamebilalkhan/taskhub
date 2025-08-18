@@ -982,36 +982,16 @@ export function init(vaultIdParam) {
     // Highlight the clicked file
     highlightSelectedLabel(fileDiv);
 
-    if (isO365File) {
-      console.log("Opening O365 file:", fileName);
-      try {
-        await invoke("open_o365_file", {
-          folderId: parseInt(folderId, 10),
-          fileName: fileName
-        });
-      } catch (err) {
-        console.error("Failed to open O365 file:", err);
-        alert(`Failed to open O365 file: ${err}`);
-      }
-    } else {
-      // Regular file - download the file
-      try {
-        // Get the API URL
-        const apiUrl = window.__TAURI__?.core?.invoke ? 'http://127.0.0.1:5000' : '';
-        // Create a download URL for the file
-        const downloadUrl = `${apiUrl}/uploads/folders/${folderId}/${encodeURIComponent(fileName)}`;
-        
-        // Create a temporary anchor element to trigger the download
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = fileName;
-        a.target = '_blank';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } catch (err) {
-        console.error("Failed to download file:", err);
-      }
+    // Show Save File modal for file download
+    try {
+      const apiUrl = window.__TAURI__?.core?.invoke ? 'http://127.0.0.1:5000' : '';
+      const secureFileName = fileName.replace(/\s+/g, '_').replace(/[^\w\s.-]/g, '');
+      const downloadUrl = `${apiUrl}/uploads/folders/${folderId}/${encodeURIComponent(secureFileName)}`;
+      
+      showSaveFileModal(fileName, downloadUrl);
+    } catch (err) {
+      console.error("Failed to show save file modal:", err);
+      alert(`Failed to show save file modal: ${err}`);
     }
   });
 
@@ -1594,9 +1574,27 @@ export function init(vaultIdParam) {
 
       const fileLi = document.createElement('li');
       fileLi.classList.add('file');
-      // Use Outlook icon for O365 files, regular file icon otherwise
-      // Check if iso365File is true (handles undefined/null/false cases)
-      const fileIcon = file.iso365File === true ? '../assets/outlook-icon.png' : '../assets/images/icon-file.svg';
+      // Function to get file icon based on extension
+      function getFileIcon(fileName, isO365File) {
+        // Use Outlook icon for O365 files
+        if (isO365File === true) {
+          return '../assets/outlook-icon.png';
+        }
+        
+        const extension = fileName.split('.').pop().toLowerCase();
+        const iconMap = {
+          'pdf': '../assets/images/pdf.png',
+          'txt': '../assets/images/txt.png',
+          'doc': '../assets/images/doc.png',
+          'docx': '../assets/images/docx.png',
+          'xls': '../assets/images/xls.png',
+          'xlsx': '../assets/images/xls.png'
+        };
+        return iconMap[extension] || '../assets/images/icon-file.svg';
+      }
+      
+      // Get appropriate file icon
+      const fileIcon = getFileIcon(file.name, file.iso365File);
       
       // Create a container div for the file with relative positioning
       const fileContainer = document.createElement('div');
@@ -1768,7 +1766,89 @@ export function init(vaultIdParam) {
   showDashboardLoading('Initializing vault...');
   restoreOpenTabs();
 
-  // Make loadTreeView globally accessible
+  // Save File Modal functionality
+  function showSaveFileModal(fileName, fileUrl) {
+    const modal = document.getElementById('save-file-modal');
+    const fileNameElement = document.getElementById('save-file-name');
+    const chooseLocationBtn = document.getElementById('choose-location');
+    const cancelBtn = document.getElementById('save-file-cancel-btn');
+    const closeBtn = document.getElementById('save-file-close-btn');
+
+    if (!modal) {
+      console.error('Save file modal not found');
+      return;
+    }
+
+    // Set file name
+    fileNameElement.textContent = fileName;
+
+    // Show modal
+    modal.classList.remove('hidden');
+
+    // Remove existing event listeners to prevent duplicates
+    const newChooseLocationBtn = chooseLocationBtn.cloneNode(true);
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    const newCloseBtn = closeBtn.cloneNode(true);
+
+    chooseLocationBtn.parentNode.replaceChild(newChooseLocationBtn, chooseLocationBtn);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+
+    // Choose Location button
+    newChooseLocationBtn.addEventListener('click', async () => {
+      try {
+        if (window.__TAURI__?.core?.invoke) {
+          // Tauri environment - show save dialog
+          const savePath = await window.__TAURI__.core.invoke('save_file_dialog', { fileName: fileName });
+          
+          if (savePath) {
+            const success = await window.__TAURI__.core.invoke('download_file_to_location', {
+              fileUrl: fileUrl,
+              savePath: savePath
+            });
+            
+            if (success) {
+              showInfoMessage(`File saved successfully to: ${savePath}`);
+            } else {
+              showInfoMessage('Failed to save file to chosen location', false);
+            }
+          }
+        } else {
+          // Web environment - fallback to regular download
+          const a = document.createElement('a');
+          a.href = fileUrl;
+          a.download = fileName;
+          a.target = '_blank';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          showInfoMessage('Download initiated');
+        }
+      } catch (error) {
+        console.error('Error choosing save location:', error);
+        showInfoMessage(`Error saving file: ${error}`, false);
+      }
+      modal.classList.add('hidden');
+    });
+
+    // Cancel and Close buttons
+    const closeModal = () => {
+      modal.classList.add('hidden');
+    };
+
+    newCancelBtn.addEventListener('click', closeModal);
+    newCloseBtn.addEventListener('click', closeModal);
+
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+  }
+
+  // Make functions globally accessible
+  window.showSaveFileModal = showSaveFileModal;
   window.loadTreeView = loadTreeView;
 }
 async function loadUrls(container, folderId) {
@@ -1905,7 +1985,11 @@ async function renderNewImage(image, pageId) {
 // Helper function to get the proper download URL for files
 window.getFileDownloadUrl = function(file, pageId) {
   const apiUrl = window.__TAURI__?.core?.invoke ? 'http://127.0.0.1:5000' : '';
-  return `${apiUrl}/uploads/${pageId}/${encodeURIComponent(file.name)}`;
+  // Apply secure filename logic to match backend's secure_filename() function
+  const secureFileName = file.name.replace(/\s+/g, '_').replace(/[^\w\s.-]/g, '');
+  console.log('🔧 Helper function - Original filename:', file.name);
+  console.log('🔧 Helper function - Secured filename:', secureFileName);
+  return `${apiUrl}/uploads/${pageId}/${encodeURIComponent(secureFileName)}`;
 }
 
 async function renderNewFile(file, pageId) {
@@ -1940,14 +2024,29 @@ async function renderNewFile(file, pageId) {
   fileContainer.style.border = "1px solid #e5e7eb";
   fileContainer.style.borderRadius = "8px";
   fileContainer.style.background = "#f9fafb";
-  fileContainer.style.marginBottom = "8px";
+  
+  console.log("File Complete: ", file);
   
   // Create file content
+  // Function to get file icon based on extension
+  function getFileIcon(fileName) {
+    const extension = fileName.split('.').pop().toLowerCase();
+    const iconMap = {
+      'pdf': '../assets/images/pdf.png',
+      'txt': '../assets/images/txt.png',
+      'doc': '../assets/images/doc.png',
+      'docx': '../assets/images/docx.png',
+      'xls': '../assets/images/xls.png',
+      'xlsx': '../assets/images/xls.png'
+    };
+    return iconMap[extension] || '../assets/images/icon-file.svg';
+  }
+  
   const fileContent = document.createElement("div");
   fileContent.style.display = "flex";
   fileContent.style.alignItems = "center";
   fileContent.innerHTML = `
-    <img src="../assets/images/icon-file.svg" style="width: 24px; height: 24px; margin-right: 12px;">
+    <img src="${getFileIcon(file.name)}" style="width: 50px; height: 50px; margin-right: 12px;">
     <div style="flex: 1;">
       <div style="font-weight: 500; color: #1f2937;">${file.name}</div>
       <div style="font-size: 12px; color: #6b7280;">
@@ -2585,6 +2684,7 @@ document.getElementById('new-tab-dropdown').addEventListener('click', function (
   document.getElementById('add-workspace-tab').click();
 });
 
+// Save File Modal functionality
 
 
 document.addEventListener('DOMContentLoaded', function () {

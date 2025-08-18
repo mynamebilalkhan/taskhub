@@ -676,4 +676,95 @@ iframe {
   margin: 0;
 }
 
+/* Save File Modal Styles */
+.file-info {
+  margin: 15px 0;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.save-options {
+  display: flex;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.save-options button {
+  flex: 1;
+  padding: 12px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary {
+  background-color: #007ECC;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #0066a3;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6c757d;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  color: #495057;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.modal-body {
+  margin-bottom: 20px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
         
+button#save-file-cancel-btn {
+    background-color: #ff00008f;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+}

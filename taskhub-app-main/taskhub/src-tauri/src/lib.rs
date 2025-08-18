@@ -3817,6 +3817,86 @@ async fn read_file_as_base64(path: String) -> Result<String, String> {
 }
 
 #[tauri::command]
+async fn save_file_dialog(window: tauri::Window, file_name: String) -> Result<Option<String>, String> {
+    println!("**rust*** save_file_dialog for file: {}", file_name);
+
+    let (tx, rx) = oneshot::channel();
+
+    window.dialog().file()
+        .set_file_name(&file_name)
+        .save_file(move |path| {
+            let result = path.map(|p| p.to_string());
+            let _ = tx.send(result);
+        });
+
+    rx.await.map_err(|_| "Failed to receive save location".to_string())
+}
+
+#[tauri::command]
+async fn download_file_to_location(fileUrl: String, savePath: String) -> Result<bool, String> {
+    println!("=== RUST DOWNLOAD DEBUG ===");
+    println!("File URL: {}", fileUrl);
+    println!("Save path: {}", savePath);
+    
+    // Extract file extension for debugging
+    let file_extension = savePath.split('.').last().unwrap_or("unknown");
+    println!("File extension: {}", file_extension);
+    
+    let client = reqwest::Client::new();
+    println!("Making HTTP request to: {}", fileUrl);
+    
+    let response = client.get(&fileUrl)
+        .send()
+        .await
+        .map_err(|e| {
+            let error_msg = format!("Failed to download file: {}", e);
+            println!("HTTP request error: {}", error_msg);
+            error_msg
+        })?;
+    
+    println!("HTTP response status: {}", response.status());
+    println!("HTTP response headers: {:?}", response.headers());
+    
+    if !response.status().is_success() {
+        let error_msg = format!("Failed to download file: HTTP {}", response.status());
+        println!("HTTP error: {}", error_msg);
+        return Err(error_msg);
+    }
+    
+    let bytes = response.bytes()
+        .await
+        .map_err(|e| {
+            let error_msg = format!("Failed to read response bytes: {}", e);
+            println!("Bytes read error: {}", error_msg);
+            error_msg
+        })?;
+    
+    println!("Downloaded {} bytes", bytes.len());
+    
+    // Create parent directories if they don't exist
+    if let Some(parent) = std::path::Path::new(&savePath).parent() {
+        if !parent.exists() {
+            println!("Creating parent directories: {:?}", parent);
+            std::fs::create_dir_all(parent)
+                .map_err(|e| format!("Failed to create parent directories: {}", e))?;
+        }
+    }
+    
+    println!("Writing file to: {}", savePath);
+    std::fs::write(&savePath, &bytes)
+        .map_err(|e| {
+            let error_msg = format!("Failed to write file to {}: {}", savePath, e);
+            println!("File write error: {}", error_msg);
+            error_msg
+        })?;
+    
+    println!("File successfully written to: {}", savePath);
+    println!("=== END RUST DOWNLOAD DEBUG ===");
+    
+    Ok(true)
+}
+
+#[tauri::command]
 fn delete_file(file_id: i32) -> Result<bool, String> {
     if !is_app_available() {
         // If you want offline logic, do it here:
@@ -4746,6 +4826,8 @@ pub fn run() {
             update_vault_user,
             open_single_file_picker,
             read_file_as_base64,
+            save_file_dialog,
+            download_file_to_location,
             delete_file,
             delete_url,
             delete_textbox,

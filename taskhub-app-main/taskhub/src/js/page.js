@@ -1,5 +1,34 @@
 import { openWorkspaceTab } from '../js/dashboard.js';
 
+// Register quill-better-table module
+function registerBetterTableModule() {
+  if (typeof Quill !== 'undefined' && typeof quillBetterTable !== 'undefined') {
+    console.log('Registering quill-better-table module:', quillBetterTable);
+    try {
+      Quill.register({
+        'modules/better-table': quillBetterTable
+      }, true);
+      console.log('quill-better-table module registered successfully');
+      return true;
+    } catch (error) {
+      console.error('Error registering quill-better-table module:', error);
+      return false;
+    }
+  } else {
+    console.error('Quill or quillBetterTable not available:', { Quill: typeof Quill, quillBetterTable: typeof quillBetterTable });
+    return false;
+  }
+}
+
+// Try to register immediately
+registerBetterTableModule();
+
+// Also try to register when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM loaded, attempting to register better-table module again...');
+  registerBetterTableModule();
+});
+
 // Make openWorkspaceTab globally available
 window.openWorkspaceTab = openWorkspaceTab;
 let tempLine = null;
@@ -3561,29 +3590,39 @@ if (!col.required) {
             
             const quill = new Quill(editor, {
               theme: 'snow',
-              readOnly: true,
-              modules: { toolbar: [['bold', 'italic'], [{ 'list': 'bullet' }], ['clean']] }
+              readOnly: false,
+              modules: { 
+                toolbar: [['bold', 'italic'], [{ 'list': 'bullet' }], ['clean']],
+                'better-table': {
+                  operationMenu: {
+                    items: {
+                      unmergeCells: { text: 'Unmerge cells' }
+                    }
+                  }
+                },
+                keyboard: {
+                  bindings: quillBetterTable.keyboardBindings
+                }
+              }
             });
-            // Clean up the text content when loading from database
-            let cleanText = item.text;
-            if (cleanText && typeof cleanText === 'string') {
-              // Remove HTML tags and convert to plain text
-              const tempDiv = document.createElement('div');
-              tempDiv.innerHTML = cleanText;
-              cleanText = tempDiv.textContent || tempDiv.innerText || cleanText;
-            }
-            quill.root.innerHTML = cleanText;
+
+            // Add table grid picker functionality for existing notes
+            setupTableGridPicker(quill, editor);
+
+            // Load the HTML content from database to preserve tables and formatting
+            let htmlContent = item.text || '';
+            quill.root.innerHTML = htmlContent;
             editor.addEventListener("click", () => {
               quill.enable(true);
               block.classList.add("editing");
-              block.dataset.originalText = quill.getText();
+              block.dataset.originalText = quill.root.innerHTML;
               deleteBtn.style.display = "block"; // Keep delete button visible while editing
             });
       
             // Real-time hashtag and URL updates for existing notes
             quill.on("text-change", async (delta, oldDelta, source) => {
               if (source === 'user') {
-                // Get the text content from Quill, not HTML
+                // Get the text content from Quill for hashtag/URL extraction
                 const currentText = quill.getText();
                 console.log('🔍 Real-time text content from Quill (existing note):', JSON.stringify(currentText));
                 
@@ -3597,7 +3636,7 @@ if (!col.required) {
                 try {
                   const currentNotes = await window.__TAURI__.core.invoke("fetch_textbox_for_page", { pageId: item.pageId });
                   if (currentNotes) {
-                    // Create a temporary note with current content for extraction
+                    // Create a temporary note with current text content for hashtag/URL extraction
                     const tempNotes = currentNotes.map(note => 
                       note.id === item.id ? { ...note, text: currentText } : note
                     );
@@ -3615,9 +3654,9 @@ if (!col.required) {
                 quill.enable(false);
                 block.classList.remove("editing");
                 deleteBtn.style.display = "none"; // Hide delete button when done editing
-                // Save the text content, not HTML
-                const newText = quill.getText().trim();
-                console.log('💾 Saving existing note text:', JSON.stringify(newText));
+                // Save the HTML content to preserve tables and formatting
+                const newText = quill.root.innerHTML.trim();
+                console.log('💾 Saving existing note HTML:', JSON.stringify(newText));
                 
                 if (newText !== block.dataset.originalText?.trim()) {
                   try {
@@ -3780,6 +3819,7 @@ if (!col.required) {
           
           if (item.type === "file") {
             console.log('🔄 Rendering file with ID:', item.id);
+            console.log('Complete File Item:', item);
             // Add draggable class to file blocks
             block.classList.add('draggable');
             block.classList.add('file-block'); // Add file-block class for consistent styling
@@ -3792,7 +3832,6 @@ if (!col.required) {
             fileContainer.style.border = "1px solid #e5e7eb";
             fileContainer.style.borderRadius = "8px";
             fileContainer.style.background = "#f9fafb";
-            fileContainer.style.marginBottom = "8px";
             
             // Create delete button for file
             const deleteBtn = document.createElement("button");
@@ -3850,16 +3889,34 @@ if (!col.required) {
               }
             });
             
+            // Function to get file icon based on extension
+            function getFileIcon(fileName) {
+              const extension = fileName.split('.').pop().toLowerCase();
+              const iconMap = {
+                'pdf': '../assets/images/pdf.png',
+                'txt': '../assets/images/txt.png',
+                'doc': '../assets/images/doc.png',
+                'docx': '../assets/images/docx.png',
+                'xls': '../assets/images/xls.png',
+                'xlsx': '../assets/images/xls.png'
+              };
+              return iconMap[extension] || '../assets/images/icon-file.svg';
+            }
+            
             // Create file content with consistent styling matching dashboard.js
             const fileContent = document.createElement("div");
             fileContent.style.display = "flex";
             fileContent.style.alignItems = "center";
             
             // Use the global getFileDownloadUrl function for consistent URL construction
-            const downloadUrl = window.getFileDownloadUrl ? window.getFileDownloadUrl(item, pageId) : `${window.__TAURI__?.core?.invoke ? 'http://127.0.0.1:5000' : ''}/uploads/${pageId}/${encodeURIComponent(item.name)}`;
+            // Apply secure filename logic for fallback case to match backend's secure_filename() function
+            const secureFileName = item.name.replace(/\s+/g, '_').replace(/[^\w\s.-]/g, '');
+            console.log('🔧 Page.js file download - Original filename:', item.name);
+            console.log('🔧 Page.js file download - Secured filename:', secureFileName);
+            const downloadUrl = window.getFileDownloadUrl ? window.getFileDownloadUrl(item, pageId) : `${window.__TAURI__?.core?.invoke ? 'http://127.0.0.1:5000' : ''}/uploads/${pageId}/${encodeURIComponent(secureFileName)}`;
             
             fileContent.innerHTML = `
-              <img src="../assets/images/icon-file.svg" style="width: 24px; height: 24px; margin-right: 12px;">
+              <img src="${getFileIcon(item.name)}" style="width: 50px; height: 50px; margin-right: 12px;">
               <div style="flex: 1;">
                 <div style="font-weight: 500; color: #1f2937;">${item.name}</div>
                 <div style="font-size: 12px; color: #6b7280;">
@@ -3867,10 +3924,20 @@ if (!col.required) {
                   ${item.createdByUser ? `• by ${item.createdByUser}` : ''}
                 </div>
               </div>
-              <a href="${downloadUrl}" download="${item.name}" target="_blank" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-block;">
+              <button class="download-btn" data-file-name="${item.name}" data-file-url="${downloadUrl}" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
                 Download
-              </a>
+              </button>
             `;
+            
+            // Add download button event listener
+            const downloadBtn = fileContent.querySelector('.download-btn');
+            if (downloadBtn) {
+              downloadBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                showSaveFileModal(downloadBtn.dataset.fileName, downloadBtn.dataset.fileUrl);
+              });
+            }
             
             fileContainer.appendChild(fileContent);
             fileContainer.appendChild(deleteBtn);
@@ -3969,6 +4036,194 @@ if (!col.required) {
       }
      
   
+      function setupTableGridPicker(quill, editorDiv) {
+        console.log('Setting up table grid picker for editor:', editorDiv);
+        console.log('Quill instance:', quill);
+        
+        // Ensure better-table module is registered
+        if (typeof registerBetterTableModule === 'function') {
+          registerBetterTableModule();
+        }
+        
+        // Check if better-table module is available
+        try {
+          const betterTableModule = quill.getModule('better-table');
+          console.log('Better table module check:', betterTableModule);
+          if (!betterTableModule) {
+            console.warn('Better table module not available, table functionality will be limited');
+          }
+        } catch (e) {
+          console.error('Error getting better-table module:', e);
+        }
+        
+        // Find the toolbar for this specific editor
+        // Try multiple methods to find the toolbar
+        let toolbar = editorDiv.previousElementSibling;
+        
+        // If previous sibling is not toolbar, look for it in the parent
+        if (!toolbar || !toolbar.classList.contains('ql-toolbar')) {
+          toolbar = editorDiv.parentElement.querySelector('.ql-toolbar');
+        }
+        
+        // If still not found, look in the block container
+        if (!toolbar || !toolbar.classList.contains('ql-toolbar')) {
+          const blockContainer = editorDiv.closest('.block');
+          if (blockContainer) {
+            toolbar = blockContainer.querySelector('.ql-toolbar');
+          }
+        }
+        
+        if (!toolbar || !toolbar.classList.contains('ql-toolbar')) {
+          console.log('Toolbar not found for editor, trying to wait for Quill initialization');
+          // Wait a bit for Quill to fully initialize and try again
+          setTimeout(() => {
+            setupTableGridPicker(quill, editorDiv);
+          }, 100);
+          return;
+        }
+        console.log('Toolbar found:', toolbar);
+
+        // Find or create the table button
+        let tableBtn = toolbar.querySelector('.ql-insertTable');
+        console.log('Existing table button found:', !!tableBtn);
+        if (!tableBtn) {
+          // Create custom table button if it doesn't exist
+          const tableFormat = toolbar.querySelector('.ql-formats:last-child');
+          console.log('Table format container found:', !!tableFormat);
+          if (tableFormat) {
+            tableBtn = document.createElement('button');
+            tableBtn.className = 'ql-insertTable';
+            tableBtn.innerHTML = 'Table ▾';
+            tableBtn.type = 'button';
+            tableFormat.appendChild(tableBtn);
+            console.log('Custom table button created and added');
+          }
+        }
+
+        if (!tableBtn) {
+          console.error('Table button could not be created or found');
+          return;
+        }
+        console.log('Table button ready:', tableBtn);
+
+        // Disable default "table" handler (prevents extra 1x1 table)
+        const toolbarModule = quill.getModule('toolbar');
+        if (toolbarModule) {
+          toolbarModule.addHandler('table', () => {
+            // do nothing, handled by grid picker
+          });
+        }
+
+        // Create table picker
+        const picker = document.createElement('div');
+        picker.className = 'table-picker';
+        
+        // Create grid (up to 10x10 by default)
+        for (let r = 0; r < 10; r++) {
+          const row = document.createElement('div');
+          row.classList.add('table-picker-row');
+          for (let c = 0; c < 10; c++) {
+            const cell = document.createElement('div');
+            cell.classList.add('table-picker-cell');
+            cell.dataset.rows = r + 1;
+            cell.dataset.cols = c + 1;
+
+            // Highlight on hover (only within this picker)
+            cell.addEventListener('mouseover', () => {
+              picker.querySelectorAll('.table-picker-cell').forEach(el => {
+                const rows = +el.dataset.rows;
+                const cols = +el.dataset.cols;
+                if (rows <= r + 1 && cols <= c + 1) {
+                  el.classList.add('active');
+                } else {
+                  el.classList.remove('active');
+                }
+              });
+            });
+
+            // Insert table on click
+            cell.addEventListener('click', () => {
+              console.log('Table cell clicked, attempting to insert table:', (r + 1) + 'x' + (c + 1));
+              
+              // Ensure quill has focus
+              quill.focus();
+              
+              try {
+                const betterTableModule = quill.getModule('better-table');
+                console.log('Better table module:', betterTableModule);
+                
+                if (betterTableModule && typeof betterTableModule.insertTable === 'function') {
+                  betterTableModule.insertTable(r + 1, c + 1);
+                  console.log('Table inserted successfully using better-table');
+                } else {
+                  console.warn('Better table module not available, trying fallback HTML table insertion');
+                  
+                  // Fallback: Insert basic HTML table
+                  const rows = r + 1;
+                  const cols = c + 1;
+                  let tableHtml = '<table style="border-collapse: collapse; width: 100%; margin: 10px 0;">';
+                  
+                  for (let i = 0; i < rows; i++) {
+                    tableHtml += '<tr>';
+                    for (let j = 0; j < cols; j++) {
+                      const cellTag = i === 0 ? 'th' : 'td';
+                      tableHtml += `<${cellTag} style="border: 1px solid #ddd; padding: 8px; text-align: left;">&nbsp;</${cellTag}>`;
+                    }
+                    tableHtml += '</tr>';
+                  }
+                  tableHtml += '</table>';
+                  
+                  // Get current selection or cursor position
+                  const range = quill.getSelection();
+                  const index = range ? range.index : quill.getLength();
+                  
+                  // Insert the HTML table
+                  quill.clipboard.dangerouslyPasteHTML(index, tableHtml);
+                  console.log('Fallback HTML table inserted');
+                }
+              } catch (error) {
+                console.error('Error inserting table:', error);
+                
+                // Final fallback: Insert plain text
+                try {
+                  const range = quill.getSelection();
+                  const index = range ? range.index : quill.getLength();
+                  quill.insertText(index, `[Table ${r + 1}x${c + 1}]`);
+                  console.log('Inserted table placeholder text as final fallback');
+                } catch (finalError) {
+                  console.error('Even text insertion failed:', finalError);
+                }
+              }
+              
+              picker.style.display = 'none';
+            });
+
+            row.appendChild(cell);
+          }
+          picker.appendChild(row);
+        }
+
+        // Add picker to button container
+        tableBtn.parentElement.style.position = 'relative';
+        tableBtn.parentElement.appendChild(picker);
+
+        // Show/hide grid picker
+        tableBtn.addEventListener('click', () => {
+          picker.style.display = picker.style.display === 'block' ? 'none' : 'block';
+        });
+
+        // Hide when clicking outside (instance-specific)
+        const hidePickerHandler = (e) => {
+          if (!e.target.closest('.ql-insertTable') && !e.target.closest('.table-picker')) {
+            picker.style.display = 'none';
+          }
+        };
+        
+        // Store handler reference for potential cleanup
+        picker._hideHandler = hidePickerHandler;
+        document.addEventListener('click', hidePickerHandler);
+      }
+
       export async function addEmptyNoteToPage(pageId, container) {
         console.log('📝 addEmptyNoteToPage called with pageId:', pageId);
         const { invoke } = window.__TAURI__.core;
@@ -4109,9 +4364,22 @@ if (!col.required) {
           theme: "snow",
           readOnly: false,
           modules: {
-            toolbar: [['bold', 'italic'], [{ list: 'bullet' }], ['clean']]
+            toolbar: [['bold', 'italic'], [{ list: 'bullet' }], ['clean']],
+            'better-table': {
+              operationMenu: {
+                items: {
+                  unmergeCells: { text: 'Unmerge cells' }
+                }
+              }
+            },
+            keyboard: {
+              bindings: quillBetterTable.keyboardBindings
+            }
           }
         });
+
+        // Add table grid picker functionality
+        setupTableGridPicker(quill, editorDiv);
       
         quill.root.innerHTML = "";
         editorDiv.focus();
@@ -4121,7 +4389,7 @@ if (!col.required) {
         // Real-time hashtag and URL updates as user types
         quill.on("text-change", async (delta, oldDelta, source) => {
           if (source === 'user') {
-            // Get the text content from Quill, not HTML
+            // Get the text content from Quill for hashtag/URL extraction
             const currentText = quill.getText();
             console.log('🔍 Real-time text content from Quill:', JSON.stringify(currentText));
             
@@ -4135,7 +4403,7 @@ if (!col.required) {
             try {
               const currentNotes = await invoke("fetch_textbox_for_page", { pageId });
               if (currentNotes) {
-                // Create a temporary note with current content for extraction
+                // Create a temporary note with current text content for hashtag/URL extraction
                 const tempNotes = currentNotes.map(note => 
                   note.id === created.id ? { ...note, text: currentText } : note
                 );
@@ -4154,9 +4422,9 @@ if (!col.required) {
             block.classList.remove("editing");
             deleteBtn.style.display = "block"; // Keep delete button visible while editing
       
-            // Save the text content, not HTML
-            const newText = quill.getText().trim();
-            console.log('💾 Saving note text:', JSON.stringify(newText));
+            // Save the HTML content to preserve tables and formatting
+            const newText = quill.root.innerHTML.trim();
+            console.log('💾 Saving note HTML:', JSON.stringify(newText));
       
             try {
               await invoke("update_textbox_text", {
@@ -4279,6 +4547,90 @@ if (!col.required) {
       okBtn.addEventListener("click", onOk);
     });
   }
+
+  // Save File Modal functionality
+  function showSaveFileModal(fileName, fileUrl) {
+    const modal = document.getElementById('save-file-modal');
+    const fileNameElement = document.getElementById('save-file-name');
+    const chooseLocationBtn = document.getElementById('choose-location');
+    const cancelBtn = document.getElementById('save-file-cancel-btn');
+    const closeBtn = document.getElementById('save-file-close-btn');
+
+    if (!modal || !fileNameElement) {
+      console.error('Save file modal elements not found');
+      return;
+    }
+
+    // Set file name
+    fileNameElement.textContent = fileName;
+
+    // Show modal
+    modal.classList.remove('hidden');
+
+    // Remove existing event listeners to prevent duplicates
+    const newChooseLocationBtn = chooseLocationBtn.cloneNode(true);
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    const newCloseBtn = closeBtn.cloneNode(true);
+
+    chooseLocationBtn.parentNode.replaceChild(newChooseLocationBtn, chooseLocationBtn);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+
+    // Choose Location handler
+    newChooseLocationBtn.addEventListener('click', async () => {
+      try {
+        if (window.__TAURI__?.core?.invoke) {
+          // Use Tauri save dialog
+          const savePath = await window.__TAURI__.core.invoke('save_file_dialog', { fileName: fileName });
+          
+          if (savePath) {
+            const success = await window.__TAURI__.core.invoke('download_file_to_location', {
+              fileUrl: fileUrl,
+              savePath: savePath
+            });
+            
+            if (success) {
+              showMessage(`File saved successfully to: ${savePath}`, 'success');
+            } else {
+              showMessage('Failed to save file to chosen location', 'error');
+            }
+          }
+        } else {
+          // Fallback for web environment
+          const a = document.createElement('a');
+          a.href = fileUrl;
+          a.download = fileName;
+          a.target = '_blank';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          showMessage('Download initiated', 'success');
+        }
+      } catch (error) {
+        console.error('Error choosing save location:', error);
+        showMessage(`Error saving file: ${error}`, 'error');
+      }
+      modal.classList.add('hidden');
+    });
+
+    // Cancel and Close handlers
+    const closeModal = () => {
+      modal.classList.add('hidden');
+    };
+
+    newCancelBtn.addEventListener('click', closeModal);
+    newCloseBtn.addEventListener('click', closeModal);
+
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+  }
+
+  // Make showSaveFileModal globally accessible
+  window.showSaveFileModal = showSaveFileModal;
 
   function showCustomCardPrompt({ title, label, okText, defaultValue = "", multiline = false }) {
     return new Promise((resolve, reject) => {
