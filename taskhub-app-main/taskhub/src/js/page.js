@@ -1,32 +1,73 @@
 import { openWorkspaceTab } from '../js/dashboard.js';
 
-// Register quill-better-table module
+// Register quill-better-table module with improved error handling
+let moduleRegistered = false;
+
 function registerBetterTableModule() {
+  if (moduleRegistered) {
+    console.log('quill-better-table module already registered');
+    return true;
+  }
+  
   if (typeof Quill !== 'undefined' && typeof quillBetterTable !== 'undefined') {
     console.log('Registering quill-better-table module:', quillBetterTable);
     try {
-      Quill.register({
-        'modules/better-table': quillBetterTable
-      }, true);
-      console.log('quill-better-table module registered successfully');
+      // Check if module is already registered
+      if (!Quill.imports['modules/better-table']) {
+        Quill.register({
+          'modules/better-table': quillBetterTable
+        }, true);
+        moduleRegistered = true;
+        console.log('quill-better-table module registered successfully');
+      } else {
+        moduleRegistered = true;
+        console.log('quill-better-table module was already registered');
+      }
       return true;
     } catch (error) {
       console.error('Error registering quill-better-table module:', error);
       return false;
     }
   } else {
-    console.error('Quill or quillBetterTable not available:', { Quill: typeof Quill, quillBetterTable: typeof quillBetterTable });
+    console.warn('Quill or quillBetterTable not available yet:', { 
+      Quill: typeof Quill, 
+      quillBetterTable: typeof quillBetterTable 
+    });
     return false;
   }
 }
 
+// Try to register with retry mechanism
+function tryRegisterWithRetry(maxAttempts = 5, delay = 100) {
+  let attempts = 0;
+  
+  function attempt() {
+    attempts++;
+    if (registerBetterTableModule()) {
+      console.log(`quill-better-table registered successfully on attempt ${attempts}`);
+      return;
+    }
+    
+    if (attempts < maxAttempts) {
+      console.log(`Registration attempt ${attempts} failed, retrying in ${delay}ms...`);
+      setTimeout(attempt, delay);
+    } else {
+      console.error('Failed to register quill-better-table after', maxAttempts, 'attempts');
+    }
+  }
+  
+  attempt();
+}
+
 // Try to register immediately
-registerBetterTableModule();
+tryRegisterWithRetry();
 
 // Also try to register when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOM loaded, attempting to register better-table module again...');
-  registerBetterTableModule();
+  console.log('DOM loaded, ensuring better-table module is registered...');
+  if (!moduleRegistered) {
+    tryRegisterWithRetry();
+  }
 });
 
 // Make openWorkspaceTab globally available
@@ -3655,7 +3696,40 @@ if (!col.required) {
                 block.classList.remove("editing");
                 deleteBtn.style.display = "none"; // Hide delete button when done editing
                 // Save the HTML content to preserve tables and formatting
-                const newText = quill.root.innerHTML.trim();
+                let newText = quill.root.innerHTML.trim();
+                
+                // Validate and clean table HTML to prevent corruption
+                if (newText.includes('<table')) {
+                  try {
+                    // Ensure tables have proper structure
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = newText;
+                    
+                    // Fix any malformed tables
+                    const tables = tempDiv.querySelectorAll('table');
+                    tables.forEach(table => {
+                      // Ensure table has proper class for styling
+                      if (!table.classList.contains('quill-better-table')) {
+                        table.classList.add('quill-better-table');
+                      }
+                      
+                      // Ensure all cells have proper borders
+                      const cells = table.querySelectorAll('td, th');
+                      cells.forEach(cell => {
+                        if (!cell.style.border) {
+                          cell.style.border = '1px solid #000';
+                          cell.style.padding = '8px';
+                        }
+                      });
+                    });
+                    
+                    newText = tempDiv.innerHTML;
+                    console.log('✅ Table HTML validated and cleaned');
+                  } catch (cleanupError) {
+                    console.warn('Table cleanup failed, using original content:', cleanupError);
+                  }
+                }
+                
                 console.log('💾 Saving existing note HTML:', JSON.stringify(newText));
                 
                 if (newText !== block.dataset.originalText?.trim()) {
@@ -4040,14 +4114,21 @@ if (!col.required) {
         console.log('Setting up table grid picker for editor:', editorDiv);
         console.log('Quill instance:', quill);
         
+        // Check if table picker is already set up for this editor
+        if (editorDiv.dataset.tablePickerSetup === 'true') {
+          console.log('Table picker already set up for this editor');
+          return;
+        }
+        
         // Ensure better-table module is registered
-        if (typeof registerBetterTableModule === 'function') {
+        if (!moduleRegistered && typeof registerBetterTableModule === 'function') {
           registerBetterTableModule();
         }
         
         // Check if better-table module is available
+        let betterTableModule = null;
         try {
-          const betterTableModule = quill.getModule('better-table');
+          betterTableModule = quill.getModule('better-table');
           console.log('Better table module check:', betterTableModule);
           if (!betterTableModule) {
             console.warn('Better table module not available, table functionality will be limited');
@@ -4057,16 +4138,17 @@ if (!col.required) {
         }
         
         // Find the toolbar for this specific editor
-        // Try multiple methods to find the toolbar
-        let toolbar = editorDiv.previousElementSibling;
+        let toolbar = null;
         
-        // If previous sibling is not toolbar, look for it in the parent
-        if (!toolbar || !toolbar.classList.contains('ql-toolbar')) {
+        // Try multiple methods to find the toolbar
+        if (editorDiv.previousElementSibling && editorDiv.previousElementSibling.classList.contains('ql-toolbar')) {
+          toolbar = editorDiv.previousElementSibling;
+        } else if (editorDiv.parentElement) {
           toolbar = editorDiv.parentElement.querySelector('.ql-toolbar');
         }
         
         // If still not found, look in the block container
-        if (!toolbar || !toolbar.classList.contains('ql-toolbar')) {
+        if (!toolbar) {
           const blockContainer = editorDiv.closest('.block');
           if (blockContainer) {
             toolbar = blockContainer.querySelector('.ql-toolbar');
@@ -4075,10 +4157,16 @@ if (!col.required) {
         
         if (!toolbar || !toolbar.classList.contains('ql-toolbar')) {
           console.log('Toolbar not found for editor, trying to wait for Quill initialization');
-          // Wait a bit for Quill to fully initialize and try again
-          setTimeout(() => {
-            setupTableGridPicker(quill, editorDiv);
-          }, 100);
+          // Wait a bit for Quill to fully initialize and try again (max 3 attempts)
+          const attempts = parseInt(editorDiv.dataset.setupAttempts || '0') + 1;
+          if (attempts <= 3) {
+            editorDiv.dataset.setupAttempts = attempts.toString();
+            setTimeout(() => {
+              setupTableGridPicker(quill, editorDiv);
+            }, 200 * attempts); // Increasing delay
+          } else {
+            console.error('Failed to find toolbar after 3 attempts');
+          }
           return;
         }
         console.log('Toolbar found:', toolbar);
@@ -4095,6 +4183,7 @@ if (!col.required) {
             tableBtn.className = 'ql-insertTable';
             tableBtn.innerHTML = 'Table ▾';
             tableBtn.type = 'button';
+            tableBtn.setAttribute('data-editor-id', editorDiv.id || 'editor-' + Date.now());
             tableFormat.appendChild(tableBtn);
             console.log('Custom table button created and added');
           }
@@ -4114,9 +4203,16 @@ if (!col.required) {
           });
         }
 
+        // Clean up any existing picker for this button
+        const existingPicker = tableBtn.parentElement.querySelector('.table-picker');
+        if (existingPicker) {
+          existingPicker.remove();
+        }
+
         // Create table picker
         const picker = document.createElement('div');
         picker.className = 'table-picker';
+        picker.style.display = 'none';
         
         // Create grid (up to 10x10 by default)
         for (let r = 0; r < 10; r++) {
@@ -4142,60 +4238,78 @@ if (!col.required) {
             });
 
             // Insert table on click
-            cell.addEventListener('click', () => {
+            cell.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
               console.log('Table cell clicked, attempting to insert table:', (r + 1) + 'x' + (c + 1));
               
-              // Ensure quill has focus
+              // Ensure quill has focus and is enabled
+              quill.enable(true);
               quill.focus();
               
-              try {
-                const betterTableModule = quill.getModule('better-table');
-                console.log('Better table module:', betterTableModule);
-                
-                if (betterTableModule && typeof betterTableModule.insertTable === 'function') {
-                  betterTableModule.insertTable(r + 1, c + 1);
-                  console.log('Table inserted successfully using better-table');
-                } else {
-                  console.warn('Better table module not available, trying fallback HTML table insertion');
-                  
-                  // Fallback: Insert basic HTML table
-                  const rows = r + 1;
-                  const cols = c + 1;
-                  let tableHtml = '<table style="border-collapse: collapse; width: 100%; margin: 10px 0;">';
-                  
-                  for (let i = 0; i < rows; i++) {
-                    tableHtml += '<tr>';
-                    for (let j = 0; j < cols; j++) {
-                      const cellTag = i === 0 ? 'th' : 'td';
-                      tableHtml += `<${cellTag} style="border: 1px solid #ddd; padding: 8px; text-align: left;">&nbsp;</${cellTag}>`;
-                    }
-                    tableHtml += '</tr>';
-                  }
-                  tableHtml += '</table>';
-                  
-                  // Get current selection or cursor position
-                  const range = quill.getSelection();
-                  const index = range ? range.index : quill.getLength();
-                  
-                  // Insert the HTML table
-                  quill.clipboard.dangerouslyPasteHTML(index, tableHtml);
-                  console.log('Fallback HTML table inserted');
-                }
-              } catch (error) {
-                console.error('Error inserting table:', error);
-                
-                // Final fallback: Insert plain text
+              // Wait a moment for focus to take effect
+              setTimeout(() => {
                 try {
+                  // Get current selection or cursor position first
                   const range = quill.getSelection();
                   const index = range ? range.index : quill.getLength();
-                  quill.insertText(index, `[Table ${r + 1}x${c + 1}]`);
-                  console.log('Inserted table placeholder text as final fallback');
-                } catch (finalError) {
-                  console.error('Even text insertion failed:', finalError);
+                  console.log('Current cursor position:', index);
+                  
+                  // Try better-table module first
+                  if (betterTableModule && typeof betterTableModule.insertTable === 'function') {
+                    console.log('Using better-table module for insertion');
+                    betterTableModule.insertTable(r + 1, c + 1);
+                    console.log('Table inserted successfully using better-table');
+                  } else {
+                    console.warn('Better table module not available, using fallback HTML table insertion');
+                    
+                    // Fallback: Insert basic HTML table with improved styling
+                    const rows = r + 1;
+                    const cols = c + 1;
+                    let tableHtml = '<table class="quill-better-table" style="border-collapse: collapse; width: 100%; margin: 10px 0; border: 1px solid #000;">';
+                    
+                    for (let i = 0; i < rows; i++) {
+                      tableHtml += '<tr>';
+                      for (let j = 0; j < cols; j++) {
+                        const cellTag = i === 0 ? 'th' : 'td';
+                        const cellStyle = i === 0 
+                          ? 'border: 1px solid #000; padding: 8px; text-align: left; background-color: #f0f0f0; font-weight: bold;'
+                          : 'border: 1px solid #000; padding: 8px; text-align: left;';
+                        tableHtml += `<${cellTag} style="${cellStyle}">&nbsp;</${cellTag}>`;
+                      }
+                      tableHtml += '</tr>';
+                    }
+                    tableHtml += '</table><p><br></p>'; // Add paragraph after table
+                    
+                    // Insert the HTML table at cursor position
+                    quill.clipboard.dangerouslyPasteHTML(index, tableHtml);
+                    console.log('Fallback HTML table inserted at index:', index);
+                    
+                    // Set cursor after the table
+                    setTimeout(() => {
+                      const newLength = quill.getLength();
+                      quill.setSelection(Math.min(index + tableHtml.length, newLength - 1));
+                    }, 50);
+                  }
+                  
+                  // Hide picker after successful insertion
+                  picker.style.display = 'none';
+                  
+                } catch (error) {
+                  console.error('Error inserting table:', error);
+                  
+                  // Final fallback: Insert plain text
+                  try {
+                    const range = quill.getSelection();
+                    const index = range ? range.index : quill.getLength();
+                    quill.insertText(index, `[Table ${r + 1}x${c + 1}]\n`);
+                    console.log('Inserted table placeholder text as final fallback');
+                    picker.style.display = 'none';
+                  } catch (finalError) {
+                    console.error('Even text insertion failed:', finalError);
+                  }
                 }
-              }
-              
-              picker.style.display = 'none';
+              }, 100); // Small delay to ensure focus is set
             });
 
             row.appendChild(cell);
@@ -4207,12 +4321,18 @@ if (!col.required) {
         tableBtn.parentElement.style.position = 'relative';
         tableBtn.parentElement.appendChild(picker);
 
-        // Show/hide grid picker
-        tableBtn.addEventListener('click', () => {
-          picker.style.display = picker.style.display === 'block' ? 'none' : 'block';
-        });
+        // Show/hide grid picker with improved event handling
+        const togglePicker = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const isVisible = picker.style.display === 'block';
+          picker.style.display = isVisible ? 'none' : 'block';
+          console.log('Table picker toggled:', !isVisible);
+        };
+        
+        tableBtn.addEventListener('click', togglePicker);
 
-        // Hide when clicking outside (instance-specific)
+        // Hide when clicking outside (instance-specific with cleanup)
         const hidePickerHandler = (e) => {
           if (!e.target.closest('.ql-insertTable') && !e.target.closest('.table-picker')) {
             picker.style.display = 'none';
@@ -4221,7 +4341,40 @@ if (!col.required) {
         
         // Store handler reference for potential cleanup
         picker._hideHandler = hidePickerHandler;
+        picker._toggleHandler = togglePicker;
+        picker._tableBtn = tableBtn;
         document.addEventListener('click', hidePickerHandler);
+        
+        // Mark this editor as having table picker set up
+        editorDiv.dataset.tablePickerSetup = 'true';
+        console.log('Table grid picker setup completed for editor');
+      }
+
+      // Function to cleanup table picker resources
+      function cleanupTablePicker(editorDiv) {
+        if (!editorDiv) return;
+        
+        try {
+          const picker = editorDiv.querySelector('.table-picker');
+          if (picker) {
+            // Remove event listeners to prevent memory leaks
+            if (picker._hideHandler) {
+              document.removeEventListener('click', picker._hideHandler);
+            }
+            if (picker._toggleHandler && picker._tableBtn) {
+              picker._tableBtn.removeEventListener('click', picker._toggleHandler);
+            }
+            
+            // Remove the picker element
+            picker.remove();
+            console.log('Table picker cleaned up for editor');
+          }
+          
+          // Remove the setup flag
+          delete editorDiv.dataset.tablePickerSetup;
+        } catch (error) {
+          console.error('Error cleaning up table picker:', error);
+        }
       }
 
       export async function addEmptyNoteToPage(pageId, container) {
@@ -4423,7 +4576,40 @@ if (!col.required) {
             deleteBtn.style.display = "block"; // Keep delete button visible while editing
       
             // Save the HTML content to preserve tables and formatting
-            const newText = quill.root.innerHTML.trim();
+            let newText = quill.root.innerHTML.trim();
+            
+            // Validate and clean table HTML to prevent corruption
+            if (newText.includes('<table')) {
+              try {
+                // Ensure tables have proper structure
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = newText;
+                
+                // Fix any malformed tables
+                const tables = tempDiv.querySelectorAll('table');
+                tables.forEach(table => {
+                  // Ensure table has proper class for styling
+                  if (!table.classList.contains('quill-better-table')) {
+                    table.classList.add('quill-better-table');
+                  }
+                  
+                  // Ensure all cells have proper borders
+                  const cells = table.querySelectorAll('td, th');
+                  cells.forEach(cell => {
+                    if (!cell.style.border) {
+                      cell.style.border = '1px solid #000';
+                      cell.style.padding = '8px';
+                    }
+                  });
+                });
+                
+                newText = tempDiv.innerHTML;
+                console.log('✅ Table HTML validated and cleaned for new note');
+              } catch (cleanupError) {
+                console.warn('Table cleanup failed for new note, using original content:', cleanupError);
+              }
+            }
+            
             console.log('💾 Saving note HTML:', JSON.stringify(newText));
       
             try {

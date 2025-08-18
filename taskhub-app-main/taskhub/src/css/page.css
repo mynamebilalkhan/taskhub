@@ -1057,6 +1057,42 @@ table.quill-better-table th {
     display: none;
 }
 
+/* Enhanced table styling for better appearance and stability */
+.quill-better-table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+  margin: 10px 0 !important;
+  table-layout: fixed !important;
+}
+
+.quill-better-table td,
+.quill-better-table th {
+  border: 1px solid #000 !important;
+  padding: 8px !important;
+  text-align: left !important;
+  vertical-align: top !important;
+  word-wrap: break-word !important;
+  min-width: 50px !important;
+}
+
+.quill-better-table th {
+  background-color: #f0f0f0 !important;
+  font-weight: bold !important;
+}
+
+/* Prevent table overflow issues */
+.ql-editor .quill-better-table {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+}
+
+/* Table cell focus styling */
+.quill-better-table td:focus,
+.quill-better-table th:focus {
+  outline: 2px solid #007bff !important;
+  outline-offset: -1px !important;
+}
+
 .page-block[data-type="note"]{
   border: none;
 
