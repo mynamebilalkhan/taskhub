@@ -963,6 +963,7 @@ div#page-blocks-container {
   background: #f9fafb;
   border-radius: 8px;
   border: 2px dashed #d1d5db;
+  display: none;
 }
 
 /* .file-label:hover ~ button {
@@ -1100,15 +1101,23 @@ table.quill-better-table th {
     border: none;
     visibility: hidden;
     opacity: 0;
-    transition: all 0.5s ease;
-    -webkit-transition: all 0.5s ease;
-    -moz-transition: all 0.5s ease;
-    -ms-transition: all 0.5s ease;
-    -o-transition: all 0.5s ease;
+    height: 0;
+    transition: height 0.5s ease;
+    -webkit-transition: height 0.5s ease;
+    -moz-transition: height 0.5s ease;
+    -ms-transition: height 0.5s ease;
+    -o-transition: height 0.5s ease;
+
+    transition: visibility 0.6s ease;
+    -webkit-transition: visibility 0.6s ease;
+    -moz-transition: visibility 0.6s ease;
+    -ms-transition: visibility 0.6s ease;
+    -o-transition: visibility 0.6s ease;
   }
 
   &:hover{
     .ql-toolbar{
+      height: auto;
       visibility: visible;
       opacity: 1;
     }
