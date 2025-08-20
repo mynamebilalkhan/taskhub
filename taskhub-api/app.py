@@ -18,7 +18,7 @@ api = Api(app, version='1.1', title='Task API',
 
 
 DB_USERNAME = 'postgres'
-DB_PASSWORD = 'postgres'
+DB_PASSWORD = 'admin123'
 DB_HOST = '127.0.0.1'
 DB_PORT = '5432'
 DB_NAME = 'TaskManagementdb'
@@ -29,7 +29,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = DB_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize database
-db = SQLAlchemy(app)
+from database import db
+db.init_app(app)
 migrate = Migrate(app, db)
 from models import *
 import migration

@@ -15,16 +15,16 @@ UserDtoModel = userNameSpace.model('UserDto', {
     'id': fields.Integer(readOnly=True, description='The user unique identifier'),
     'username': fields.String(required=True, description='The user username'),
     'password': fields.String(required=True, description='The user password'),
-    'firstName': fields.String(description='The user firstname'),
-    'lastName': fields.String(description='The user lastname'),
-    'role': fields.Integer(description='The user role'),
-    'paymentPlan': fields.Integer(description='The Payment Plan'),
-    'paymentDateTime': fields.Integer(description='The Payment Plan date time'),
-    'companyId': fields.Integer(description='The user company identifier'),
-    'company': fields.String(description='The user company name'),
-    'createdDateTime': fields.DateTime(description='The created date time'),
-    'fullName': fields.String(description='The full name'),
-    'externalUsername': fields.String(description='The external username')
+    'firstName': fields.String(required=False, description='The user firstname'),
+    'lastName': fields.String(required=False, description='The user lastname'),
+    'role': fields.Integer(required=False, description='The user role'),
+    'paymentPlan': fields.Integer(required=False, description='The Payment Plan'),
+    'paymentDateTime': fields.Integer(required=False, description='The Payment Plan date time'),
+    'companyId': fields.Integer(required=False, description='The user company identifier'),
+    'company': fields.String(required=False, description='The user company name'),
+    'createdDateTime': fields.DateTime(required=False, description='The created date time'),
+    'fullName': fields.String(required=False, description='The full name'),
+    'externalUsername': fields.String(required=False, description='The external username')
 })
 userFilterParams = userNameSpace.parser()
 userFilterParams.add_argument('companyId', type=str, required=False, help='The users filters by company id')
@@ -63,20 +63,23 @@ class Users(Resource):
         data = request.json
         print("data",data)
 
-        existingUser = User.query.filter_by(Username=data['username'], CompanyId=data['companyId']).first()
+        # Handle optional companyId
+        company_id = data.get('companyId')
+        
+        existingUser = User.query.filter_by(Username=data['username'], CompanyId=company_id).first()
         if existingUser:
             return {'message': 'Username already exists within company.'}, 400
         hashedPassword = generate_password_hash(data['password'])
         newUser = User(
             Username=data['username'],
-            Role=data['role'],
-            FirstName=data['firstName'],
-            LastName=data['lastName'],
-            CompanyId=data['companyId'],
-            PaymentPlan=data['paymentPlan'],
+            Role=data.get('role'),
+            FirstName=data.get('firstName'),
+            LastName=data.get('lastName'),
+            CompanyId=company_id,
+            PaymentPlan=data.get('paymentPlan'),
             CreatedDateTime=datetime.now(),
             Password = hashedPassword,
-            ExternalUsername = data['externalUsername']
+            ExternalUsername = data.get('externalUsername')
         )
         try:
             db.session.add(newUser)

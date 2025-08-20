@@ -1,4 +1,4 @@
-from app import db, DB_URI, app
+from database import db
 from sqlalchemy import Column, Integer, String, Date, DateTime, Text, ForeignKey, Boolean, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -13,7 +13,8 @@ class Vault(db.Model):
     LastModifyDateTime = Column(DateTime)
     
     CreatedByUser = relationship('User', foreign_keys=[CreatedBy], back_populates='VaultsCreated', overlaps="VaultsCreated")
-    Collaborations = relationship('Collaboration', back_populates='Vault', overlaps="Collaborations")
+    Collaborations = relationship('Collaboration', back_populates='Vault', cascade='all, delete-orphan', overlaps="Collaborations")
+    Folders = relationship('Folder', backref='Vault', cascade='all, delete-orphan', foreign_keys='Folder.VaultId')
 
     def serialize(self):
         if self.Collaborations:
@@ -93,7 +94,7 @@ class Task(db.Model):
     AssignedUser = relationship('User', foreign_keys=[AssignedTo], back_populates='TasksAssigned', overlaps="TasksAssigned")
     CreatedByUser = relationship('User', foreign_keys=[CreatedBy], back_populates='TasksCreated', overlaps="TasksCreated")
     ParentTask = relationship('Task', remote_side=[Id], back_populates='ChildTasks')
-    ChildTasks = relationship('Task', back_populates='ParentTask')
+    ChildTasks = relationship('Task', back_populates='ParentTask', cascade='all, delete-orphan')
     Page = relationship('Page', back_populates='Tasks')
     GeneratedWorkspace = relationship('Workspace', foreign_keys='Workspace.CreatedFromTaskId', backref='GeneratedFromTask', uselist=False)
 
@@ -132,7 +133,7 @@ class Workspace(db.Model):
     CreatedFromTaskRef = relationship('Task', foreign_keys=[CreatedFromTaskId])
     CreatedByUser = relationship('User', foreign_keys=[CreatedBy], overlaps='CreatedByUser')
     Folder = relationship('Folder', back_populates='Workspaces')
-    Pages = relationship('Page', back_populates='Workspace')
+    Pages = relationship('Page', back_populates='Workspace', cascade='all, delete-orphan')
 
     def serialize(self):
         return {
@@ -159,10 +160,10 @@ class Folder(db.Model):
     VaultId = Column(Integer, ForeignKey('vaults.Id'), nullable=True)
 
     CreatedByUser = relationship('User', foreign_keys=[CreatedBy])
-    Files = relationship('File', back_populates='Folder')  
+    Files = relationship('File', back_populates='Folder', cascade='all, delete-orphan')  
     ParentFolder = relationship('Folder', remote_side=[Id], back_populates='ChildFolders')
-    ChildFolders = relationship('Folder', back_populates='ParentFolder') 
-    Workspaces = relationship('Workspace', back_populates='Folder')  
+    ChildFolders = relationship('Folder', back_populates='ParentFolder', cascade='all, delete-orphan') 
+    Workspaces = relationship('Workspace', back_populates='Folder', cascade='all, delete-orphan')  
     Urls = relationship('Url', back_populates='Folder', cascade='all, delete-orphan')
 
     def serialize(self):
@@ -318,12 +319,12 @@ class User(db.Model):
     Password = Column(String)
     FirstName = Column(String)
     LastName = Column(String)
-    Role = Column(String)
+    Role = Column(Integer)
     ExternalUsername = Column(String)
     PaymentPlan = Column(Integer)
     PaymentDateTime = Column(DateTime)
     CreatedDateTime = Column(DateTime)
-    CompanyId = Column(Integer, ForeignKey('companies.Id'))
+    CompanyId = Column(Integer, ForeignKey('companies.Id'), nullable=True)
 
     TasksAssigned = relationship('Task', foreign_keys=[Task.AssignedTo], back_populates='AssignedUser', overlaps="TasksAssigned")
     TasksCreated = relationship('Task', foreign_keys=[Task.CreatedBy], back_populates='CreatedByUser', overlaps="TasksCreated")
@@ -391,10 +392,10 @@ class Page(db.Model):
 
     Workspace = relationship('Workspace', back_populates='Pages')
     CreatedByUser = relationship('User')
-    Tasks = relationship('Task', back_populates='Page')
-    TextBoxes = relationship('TextBox', back_populates='Page')
-    Cards = relationship('Card', back_populates='Page')
-    Images = relationship('Image', back_populates='Page')
+    Tasks = relationship('Task', back_populates='Page', cascade='all, delete-orphan')
+    TextBoxes = relationship('TextBox', back_populates='Page', cascade='all, delete-orphan')
+    Cards = relationship('Card', back_populates='Page', cascade='all, delete-orphan')
+    Images = relationship('Image', back_populates='Page', cascade='all, delete-orphan')
 
     def serialize(self):
         return {

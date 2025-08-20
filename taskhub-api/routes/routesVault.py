@@ -16,88 +16,7 @@ VaultModel = vaultNameSpace.model('Vault', {
     'numOfUsers': fields.Integer(description='The vault usersNum'),
 })
 
-def delete_tasks_by_vault_id(vault_id):
-    """Delete all tasks that belong to a vault and their related data"""
-    try:
-        # Find all tasks that belong to this vault through the hierarchy:
-        # Task -> Page -> Workspace -> Folder -> Vault
-        tasks_query = db.session.query(Task).join(
-            Page, Task.PageId == Page.Id
-        ).join(
-            Workspace, Page.WorkspaceId == Workspace.Id
-        ).join(
-            Folder, Workspace.FolderId == Folder.Id
-        ).filter(
-            Folder.VaultId == vault_id
-        )
-        
-        tasks = tasks_query.all()
-        task_ids = [task.Id for task in tasks]
-        task_count = len(tasks)
-        
-        print(f"Found {task_count} tasks to delete for vault {vault_id}")
-        if task_ids:
-            print(f"Task IDs to delete: {task_ids}")
-        
-        # Delete all tasks at once with their references  
-        if task_ids:
-            # Delete favorite tasks references
-            deleted_fav = FavoriteTasks.query.filter(FavoriteTasks.TaskId.in_(task_ids)).delete(synchronize_session=False)
-            print(f"Deleted {deleted_fav} favorite task references")
-            
-            # Delete pinned tasks references
-            deleted_pinned = PinnedTasks.query.filter(PinnedTasks.TaskId.in_(task_ids)).delete(synchronize_session=False)
-            print(f"Deleted {deleted_pinned} pinned task references")
-            
-            # Find and delete child tasks (tasks that have any of our tasks as parent)
-            child_tasks = Task.query.filter(Task.ParentId.in_(task_ids)).all()
-            child_task_ids = [child.Id for child in child_tasks]
-            
-            if child_task_ids:
-                print(f"Found {len(child_task_ids)} child tasks to delete")
-                # Delete child task references
-                FavoriteTasks.query.filter(FavoriteTasks.TaskId.in_(child_task_ids)).delete(synchronize_session=False)
-                PinnedTasks.query.filter(PinnedTasks.TaskId.in_(child_task_ids)).delete(synchronize_session=False)
-                
-                # Delete child tasks
-                Task.query.filter(Task.Id.in_(child_task_ids)).delete(synchronize_session=False)
-            
-            # Delete the main tasks
-            deleted_tasks = Task.query.filter(Task.Id.in_(task_ids)).delete(synchronize_session=False)
-            print(f"Deleted {deleted_tasks} main tasks")
-        
-        print(f"Successfully deleted {task_count} tasks and their references for vault {vault_id}")
-        return task_count
-        
-    except Exception as e:
-        print(f"Error deleting tasks for vault {vault_id}: {str(e)}")
-        raise e
-
-def test_task_fetch_for_vault(vault_id):
-    """Test function to verify task fetching works after vault operations"""
-    try:
-        # Query all tasks that should belong to this vault
-        tasks_query = db.session.query(Task).join(
-            Page, Task.PageId == Page.Id
-        ).join(
-            Workspace, Page.WorkspaceId == Workspace.Id
-        ).join(
-            Folder, Workspace.FolderId == Folder.Id
-        ).filter(
-            Folder.VaultId == vault_id
-        )
-        
-        tasks = tasks_query.all()
-        print(f"Test: Found {len(tasks)} tasks for vault {vault_id}")
-        
-        for task in tasks:
-            print(f"  Task: {task.Id} - {task.Title} (Page: {task.Page.Name})")
-        
-        return len(tasks)
-        
-    except Exception as e:
-        print(f"Error testing task fetch for vault {vault_id}: {str(e)}")
-        return -1
+# Helper functions removed - cascade deletion is now handled in the main delete method
 
 # Resource for managing vaults
 vaultFilterParams = vaultNameSpace.parser()
@@ -169,87 +88,86 @@ class VaultResource(Resource):
         return vault.serialize()
 
     @vaultNameSpace.doc('DeleteVault')
-    @vaultNameSpace.response(204, 'Vault deleted')
+    @vaultNameSpace.response(204, 'Vault deleted successfully')
+    @vaultNameSpace.response(404, 'Vault not found')
+    @vaultNameSpace.response(500, 'Internal server error during deletion')
     def delete(self, id):
         """Delete a vault and all its related data"""
         try:
-            vault = Vault.query.get_or_404(id)
+            # Get the vault
+            vault = Vault.query.get(id)
+            if not vault:
+                return {'message': 'Vault not found'}, 404
+
+            # Clear CreatedFromTaskId and CreatedFromCardId references in Workspaces
+            # to prevent foreign key constraint violations
+            workspaces_in_vault = db.session.query(Workspace).join(Folder).filter(Folder.VaultId == id).all()
+            for workspace in workspaces_in_vault:
+                workspace.CreatedFromTaskId = None
+                workspace.CreatedFromCardId = None
+
+            # Delete FavoriteTasks and PinnedTasks associated with tasks in this vault
+            tasks_in_vault = db.session.query(Task).join(Page).join(Workspace).join(Folder).filter(Folder.VaultId == id).all()
+            for task in tasks_in_vault:
+                # Delete FavoriteTasks
+                FavoriteTasks.query.filter_by(TaskId=task.Id).delete()
+                # Delete PinnedTasks
+                PinnedTasks.query.filter_by(TaskId=task.Id).delete()
+
+            # Delete CardConnections associated with cards in this vault
+            cards_in_vault = db.session.query(Card).join(Page).join(Workspace).join(Folder).filter(Folder.VaultId == id).all()
+            for card in cards_in_vault:
+                # Delete connections where this card is the source or target
+                CardConnection.query.filter(
+                    (CardConnection.FromCardId == card.Id) | 
+                    (CardConnection.ToCardId == card.Id)
+                ).delete(synchronize_session=False)
+
+            # Delete files that reference pages in this vault
+            # First get all page IDs in this vault
+            page_ids = [page.Id for page in db.session.query(Page).join(Workspace).join(Folder).filter(Folder.VaultId == id).all()]
+            app.logger.info(f"Found {len(page_ids)} pages in vault {id}: {page_ids}")
             
-            # Delete all tasks belonging to this vault using our helper function
-            task_count = delete_tasks_by_vault_id(id)
-            print(f"Vault {id}: Deleted {task_count} tasks")
+            # Delete all files that reference any of these pages - delete individually to ensure proper removal
+            if page_ids:
+                files_to_delete = File.query.filter(File.PageId.in_(page_ids)).all()
+                app.logger.info(f"Found {len(files_to_delete)} files to delete referencing pages")
+                for file in files_to_delete:
+                    app.logger.info(f"Deleting file {file.Id} ({file.Name}) referencing PageId {file.PageId}")
+                    db.session.delete(file)
             
-            # Flush the session to ensure task deletions are committed before other operations
+            # Also delete files that have WorkspaceId in this vault
+            workspace_ids = [ws.Id for ws in db.session.query(Workspace).join(Folder).filter(Folder.VaultId == id).all()]
+            if workspace_ids:
+                workspace_files_to_delete = File.query.filter(File.WorkspaceId.in_(workspace_ids)).all()
+                app.logger.info(f"Found {len(workspace_files_to_delete)} files to delete referencing workspaces")
+                for file in workspace_files_to_delete:
+                    app.logger.info(f"Deleting file {file.Id} ({file.Name}) referencing WorkspaceId {file.WorkspaceId}")
+                    db.session.delete(file)
+            
+            # Commit file deletions to ensure foreign key constraints are satisfied
+            db.session.commit()
+            app.logger.info(f"Committed file deletions for vault {id}")
+            
+            # Verify all files are deleted before proceeding
+            remaining_files = File.query.filter(File.PageId.in_(page_ids) if page_ids else False).count()
+            if remaining_files > 0:
+                app.logger.error(f"Still {remaining_files} files referencing pages after deletion attempt")
+                raise Exception(f"Failed to delete all files: {remaining_files} files still reference pages in vault")
+
+            # Flush changes before deleting the vault to ensure foreign key references are cleared
             db.session.flush()
             
-            # Handle other related data
-            # 1. Delete all collaborations for this vault
-            collaborations = Collaboration.query.filter_by(VaultId=id).all()
-            for collaboration in collaborations:
-                db.session.delete(collaboration)
-            
-            # 2. Handle folders and their nested data (cascade deletion)
-            folders = Folder.query.filter_by(VaultId=id).all()
-            for folder in folders:
-                # First handle workspaces and all their contents
-                workspaces = Workspace.query.filter_by(FolderId=folder.Id).all()
-                for workspace in workspaces:
-                    # Get all pages in this workspace
-                    pages = Page.query.filter_by(WorkspaceId=workspace.Id).all()
-                    for page in pages:
-                        # Tasks already deleted by helper function above
-                        
-                        # Delete all textboxes (task notes) in this page
-                        textboxes = TextBox.query.filter_by(PageId=page.Id).all()
-                        for textbox in textboxes:
-                            db.session.delete(textbox)
-                        
-                        # Delete all cards in this page
-                        cards = Card.query.filter_by(PageId=page.Id).all()
-                        for card in cards:
-                            # Delete card connections
-                            from_connections = CardConnection.query.filter_by(FromCardId=card.Id).all()
-                            to_connections = CardConnection.query.filter_by(ToCardId=card.Id).all()
-                            for connection in from_connections + to_connections:
-                                db.session.delete(connection)
-                            
-                            # Delete the card
-                            db.session.delete(card)
-                        
-                        # Delete all images in this page
-                        images = Image.query.filter_by(PageId=page.Id).all()
-                        for image in images:
-                            db.session.delete(image)
-                        
-                        # Delete the page
-                        db.session.delete(page)
-                    
-                    # Delete the workspace
-                    db.session.delete(workspace)
-                
-                # Delete files in this folder
-                files = File.query.filter_by(FolderId=folder.Id).all()
-                for file in files:
-                    db.session.delete(file)
-                
-                # Delete URLs in this folder  
-                urls = Url.query.filter_by(FolderId=folder.Id).all()
-                for url in urls:
-                    db.session.delete(url)
-                
-                # Delete the folder itself
-                db.session.delete(folder)
-            
-            # 3. Now delete the vault
+            # Delete the vault - SQLAlchemy cascade will handle all related entities
             db.session.delete(vault)
             db.session.commit()
-            return '', 204
+            
+            return {'message': 'Vault and all related data deleted successfully'}, 200
             
         except Exception as e:
             db.session.rollback()
-            # Log the error for debugging
-            print(f"Error deleting vault {id}: {str(e)}")
-            return {'error': f'Failed to delete vault: {str(e)}'}, 500
+            app.logger.error(f"Error deleting vault {id}: {str(e)}")
+            return {'message': f'Error deleting vault: {str(e)}'}, 500
 @vaultNameSpace.route('/Company/<int:companyId>')
 @vaultNameSpace.response(404, 'No vaults found for this company')
 @vaultNameSpace.param('companyId', 'The company identifier')
@@ -270,11 +188,30 @@ class VaultTaskTest(Resource):
     def get(self, id):
         """Test task fetching for a vault - useful for debugging"""
         try:
-            task_count = test_task_fetch_for_vault(id)
+            # Query all tasks that belong to this vault through the hierarchy
+            tasks_query = db.session.query(Task).join(
+                Page, Task.PageId == Page.Id
+            ).join(
+                Workspace, Page.WorkspaceId == Workspace.Id
+            ).join(
+                Folder, Workspace.FolderId == Folder.Id
+            ).filter(
+                Folder.VaultId == id
+            )
+            
+            tasks = tasks_query.all()
+            task_count = len(tasks)
+            
             return {
                 'vaultId': id,
                 'taskCount': task_count,
-                'status': 'success' if task_count >= 0 else 'error'
+                'tasks': [{
+                    'id': task.Id,
+                    'title': task.Title,
+                    'pageId': task.PageId,
+                    'pageName': task.Page.Name if task.Page else None
+                } for task in tasks[:10]],  # Limit to first 10 for performance
+                'status': 'success'
             }
         except Exception as e:
             return {
@@ -283,11 +220,7 @@ class VaultTaskTest(Resource):
                 'status': 'error'
             }, 500
 
-# Add resources to namespace
-vaultNameSpace.add_resource(Vaults, '/')
-vaultNameSpace.add_resource(VaultResource, '/<int:id>')
-vaultNameSpace.add_resource(VaultsByCompany, '/Company/<int:companyId>')
-vaultNameSpace.add_resource(VaultTaskTest, '/<int:id>/test-tasks')
-api.add_namespace(vaultNameSpace)
+# Resources are automatically registered with the namespace via decorators
+# The namespace is added to the API in app.py
 if __name__ == '__main__':
     app.run(debug=True)
