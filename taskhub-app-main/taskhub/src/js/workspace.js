@@ -29,6 +29,105 @@ window.renderNewImageInWorkspace = function(image, pageId) {
   }
 };
 
+// Simple notification function for workspace.js
+function showWorkspaceNotification(message, type, filePath = null) {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    
+    if (filePath) {
+        notification.innerHTML = `
+            <div style="font-weight: 600; margin-bottom: 4px;">${message}</div>
+            <div style="font-size: 12px; opacity: 0.9;">${filePath}</div>
+        `;
+    } else {
+        notification.textContent = message;
+    }
+
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 10000;
+        max-width: 400px;
+        word-wrap: break-word;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+        text-align: center;
+    `;
+
+    if (type === 'success') {
+        notification.style.backgroundColor = '#10b981';
+    } else if (type === 'error') {
+        notification.style.backgroundColor = '#ef4444';
+    } else {
+        notification.style.backgroundColor = '#3b82f6';
+    }
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 3000);
+}
+
+// Global download function for workspace files
+function downloadFileDirectWorkspace(fileName, fileUrl) {
+    try {
+        if (window.__TAURI__?.core?.invoke) {
+            // Use Tauri save dialog directly
+            let selectedSavePath = null;
+            window.__TAURI__.core.invoke('save_file_dialog', { fileName: fileName })
+                .then(savePath => {
+                    if (savePath) {
+                        selectedSavePath = savePath;
+                        return window.__TAURI__.core.invoke('download_file_to_location', {
+                            fileUrl: fileUrl,
+                            savePath: savePath
+                        });
+                    }
+                    return false;
+                })
+                .then(success => {
+                    if (success) {
+                        console.log(`File saved successfully`);
+                        showWorkspaceNotification('File saved successfully', 'success', selectedSavePath);
+                    } else {
+                        console.log('Save operation cancelled by user or failed');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error during direct download:', error);
+                    showWorkspaceNotification('Error downloading file', 'error');
+                });
+        } else {
+            // Fallback for web environment - direct download
+            const a = document.createElement('a');
+            a.href = fileUrl;
+            a.download = fileName;
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            console.log('Download initiated for:', fileName);
+            showWorkspaceNotification('Download initiated', 'success');
+        }
+    } catch (error) {
+        console.error('Error in downloadFileDirect:', error);
+        showWorkspaceNotification('Error downloading file', 'error');
+    }
+}
+
+// Make functions globally available
+window.downloadFileDirectWorkspace = downloadFileDirectWorkspace;
+window.downloadFileDirect = downloadFileDirectWorkspace; // For compatibility
+
 // Function to render a new file in workspace context
 window.renderNewFileInWorkspace = function(file, pageId) {
   console.log('Rendering new file in workspace context:', file);
@@ -154,7 +253,8 @@ window.renderNewFileInWorkspace = function(file, pageId) {
     downloadBtn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      showSaveFileModal(downloadBtn.dataset.fileName, downloadBtn.dataset.fileUrl);
+      // Use the local downloadFileDirect function directly instead of the global one
+      downloadFileDirectWorkspace(downloadBtn.dataset.fileName, downloadBtn.dataset.fileUrl);
     });
   }
 
@@ -1376,6 +1476,8 @@ if (workspaceFolder) {
         updateUI(!currentlyHidden);
     });
 
+    // Direct download function that skips the modal
+
     // Save File Modal functionality
     function showSaveFileModal(fileName, fileUrl) {
         const modal = document.getElementById('save-file-modal');
@@ -1470,7 +1572,9 @@ if (workspaceFolder) {
         document.addEventListener('keydown', handleKeyPress);
     }
     
-    // Make showSaveFileModal globally accessible
+    // Make functions globally accessible
+    window.downloadFileDirectWorkspace = downloadFileDirectWorkspace;
+    window.downloadFileDirect = downloadFileDirectWorkspace; // Also assign to global for compatibility
     window.showSaveFileModal = showSaveFileModal;
 }
 

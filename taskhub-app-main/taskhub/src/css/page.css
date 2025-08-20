@@ -853,7 +853,7 @@ div#page-blocks-container {
   padding: 20px;
   /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); */
   min-height: 200px;
-  z-index: 10;
+  z-index: 1;
 }
 
 /* Remove old tab styles */

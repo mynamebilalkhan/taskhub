@@ -16,6 +16,11 @@ function setActiveMenuItem(clickedLi) {
       if (firstLi) setActiveMenuItem(firstLi);
     }
 
+    // Close all existing tabs before loading new vault
+    if (window.closeAllTabs) {
+      window.closeAllTabs();
+    }
+
     // 1) Fetch the dashboard HTML partial
     const res = await fetch('pages/dashboard.html');
     const html = await res.text();

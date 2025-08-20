@@ -18,7 +18,7 @@ api = Api(app, version='1.1', title='Task API',
 
 
 DB_USERNAME = 'postgres'
-DB_PASSWORD = 'admin123'
+DB_PASSWORD = 'postgres'
 DB_HOST = '127.0.0.1'
 DB_PORT = '5432'
 DB_NAME = 'TaskManagementdb'

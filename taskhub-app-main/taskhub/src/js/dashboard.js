@@ -633,6 +633,100 @@ export function init(vaultIdParam) {
   let currentSelectedFolderId = null;
   let currentSelectedVaultId = null;
 
+  // Global notification function for dashboard.js
+  function showDashboardNotification(message, type, filePath = null) {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    
+    if (filePath) {
+      notification.innerHTML = `
+        <div style="font-weight: 600; margin-bottom: 4px;">${message}</div>
+        <div style="font-size: 12px; opacity: 0.9;">${filePath}</div>
+      `;
+    } else {
+      notification.textContent = message;
+    }
+
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 20px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 500;
+      z-index: 10000;
+      max-width: 400px;
+      word-wrap: break-word;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s ease;
+      text-align: center;
+    `;
+
+    if (type === 'success') {
+      notification.style.backgroundColor = '#10b981';
+    } else if (type === 'error') {
+      notification.style.backgroundColor = '#ef4444';
+    } else {
+      notification.style.backgroundColor = '#3b82f6';
+    }
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 3000);
+  }
+
+  // Dashboard-specific download function
+  function downloadFileDirect(fileName, fileUrl) {
+    try {
+      if (window.__TAURI__?.core?.invoke) {
+        // Use Tauri save dialog directly
+        let selectedSavePath = null;
+        window.__TAURI__.core.invoke('save_file_dialog', { fileName: fileName })
+          .then(savePath => {
+            if (savePath) {
+              selectedSavePath = savePath;
+              return window.__TAURI__.core.invoke('download_file_to_location', {
+                fileUrl: fileUrl,
+                savePath: savePath
+              });
+            }
+            return false;
+          })
+          .then(success => {
+            if (success) {
+              showDashboardNotification('File saved successfully', 'success', selectedSavePath);
+            } else {
+              console.log('Save operation cancelled by user or failed');
+            }
+          })
+          .catch(error => {
+            console.error('Error during direct download:', error);
+            showDashboardNotification(`Error saving file: ${error}`, 'error');
+          });
+      } else {
+        // Fallback for web environment
+        const a = document.createElement('a');
+        a.href = fileUrl;
+        a.download = fileName;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        console.log('Download initiated for:', fileName);
+        showDashboardNotification('Download initiated', 'success');
+      }
+    } catch (error) {
+      console.error('Error in downloadFileDirect:', error);
+      showDashboardNotification('Error downloading file', 'error');
+    }
+  }
+
   function showCustomPrompt({ title, label, okText, defaultValue = "", multiline = false }) {
     return new Promise((resolve, reject) => {
       const modal = document.getElementById("custom-modal");
@@ -923,6 +1017,25 @@ export function init(vaultIdParam) {
           folderId: folderId,
         });
         loadTreeView();
+      } else if (action === "download") {
+        if (type === "file") {
+          const fileId = element.dataset.fileId;
+          const fileName = element.dataset.fileName;
+          const folderId = element.dataset.folderId;
+          
+          if (fileId && fileName && folderId) {
+            try {
+              const apiUrl = window.__TAURI__?.core?.invoke ? 'http://127.0.0.1:5000' : '';
+              const secureFileName = fileName.replace(/\s+/g, '_').replace(/[^\w\s.-]/g, '');
+              const downloadUrl = `${apiUrl}/uploads/folders/${folderId}/${encodeURIComponent(secureFileName)}`;
+              
+              downloadFileDirect(fileName, downloadUrl);
+            } catch (err) {
+              console.error("Failed to download file:", err);
+              showInfoMessage(`Failed to download file: ${err}`, false);
+            }
+          }
+        }
       }
     } catch (err) {
       console.error("Error handling action:", err);
@@ -988,7 +1101,7 @@ export function init(vaultIdParam) {
       const secureFileName = fileName.replace(/\s+/g, '_').replace(/[^\w\s.-]/g, '');
       const downloadUrl = `${apiUrl}/uploads/folders/${folderId}/${encodeURIComponent(secureFileName)}`;
       
-      showSaveFileModal(fileName, downloadUrl);
+      downloadFileDirect(fileName, downloadUrl);
     } catch (err) {
       console.error("Failed to show save file modal:", err);
       alert(`Failed to show save file modal: ${err}`);
@@ -1766,7 +1879,43 @@ export function init(vaultIdParam) {
   showDashboardLoading('Initializing vault...');
   restoreOpenTabs();
 
-  // Save File Modal functionality
+  // Direct download function without modal
+  async function downloadFileDirect(fileName, fileUrl) {
+    try {
+      if (window.__TAURI__?.core?.invoke) {
+        // Tauri environment - show save dialog directly
+        const savePath = await window.__TAURI__.core.invoke('save_file_dialog', { fileName: fileName });
+        
+        if (savePath) {
+          const success = await window.__TAURI__.core.invoke('download_file_to_location', {
+            fileUrl: fileUrl,
+            savePath: savePath
+          });
+          
+          if (success) {
+            showInfoMessage(`File saved successfully to: ${savePath}`);
+          } else {
+            showInfoMessage('Failed to save file to chosen location', false);
+          }
+        }
+      } else {
+        // Web environment - fallback to regular download
+        const a = document.createElement('a');
+        a.href = fileUrl;
+        a.download = fileName;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showInfoMessage('Download initiated');
+      }
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      showInfoMessage(`Error downloading file: ${error}`, false);
+    }
+  }
+
+  // Save File Modal functionality (kept for backward compatibility)
   function showSaveFileModal(fileName, fileUrl) {
     const modal = document.getElementById('save-file-modal');
     const fileNameElement = document.getElementById('save-file-name');
@@ -1848,6 +1997,7 @@ export function init(vaultIdParam) {
   }
 
   // Make functions globally accessible
+  window.downloadFileDirect = downloadFileDirect;
   window.showSaveFileModal = showSaveFileModal;
   window.loadTreeView = loadTreeView;
 }
@@ -1891,12 +2041,7 @@ function ensureAddTabButton() {
     addBtn.style.cursor = "pointer";
 
     addBtn.addEventListener("click", () => {
-      const fakeWorkspace = {
-        id: "temp-" + Date.now(),
-        name: "New Workspace",
-        folderId: null
-      };
-      openWorkspaceTab(fakeWorkspace, true);
+      openGoogleEmbedTab();
     });
     // Right-click event to show context menu
     addBtn.addEventListener("contextmenu", (e) => {
@@ -2054,10 +2199,20 @@ async function renderNewFile(file, pageId) {
         ${file.createdByUser ? `• by ${file.createdByUser}` : ''}
       </div>
     </div>
-    <a href="${getFileDownloadUrl(file, pageId)}" download="${file.name}" target="_blank" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-block; text-align: center;">
+    <button class="download-btn" data-file-name="${file.name}" data-file-url="${getFileDownloadUrl(file, pageId)}" style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-block; text-align: center;">
       Download
-    </a>
+    </button>
   `;
+  
+  // Add download button event listener
+  const downloadBtn = fileContent.querySelector('.download-btn');
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      downloadFileDirect(downloadBtn.dataset.fileName, downloadBtn.dataset.fileUrl);
+    });
+  }
   
   fileContainer.appendChild(fileContent);
   block.appendChild(fileContainer);
@@ -2133,8 +2288,7 @@ export function openWorkspaceTab(workspace, forceNew = false) {
   const tabsBar = document.getElementById('tabs-bar');
   const tabsContent = document.getElementById('tabs-content');
 
-  const anyOpen = Object.keys(openTabs).length > 0;
-
+  // If workspace is already open and not forcing new, just activate it
   if (!forceNew && openTabs[workspace.id]) {
     activateTab(workspace.id);
     // Also refresh tasks when switching to an already open workspace
@@ -2155,100 +2309,6 @@ export function openWorkspaceTab(workspace, forceNew = false) {
         }
       }
     }, 100);
-    return;
-  }
-
-  if (!forceNew && anyOpen) {
-    const firstOpenId = getActiveTabId();
-    if (!firstOpenId) {
-      // fallback ako nema ni jedan aktivan
-      firstOpenId = Object.keys(openTabs)[0];
-    }
-    const { tab, content } = openTabs[firstOpenId];
-
-    delete openTabs[firstOpenId];
-    tab.dataset.workspaceId = workspace.id;
-    tab.innerHTML = `${workspace.name} <span class="close-tab">×</span>`;
-    tab.querySelector('.close-tab').addEventListener('click', () => {
-      // Safely remove workspace-specific lines
-      if (window.workspaceLines && window.workspaceLines[workspace.id]) {
-        window.workspaceLines[workspace.id].forEach(line => {
-          try {
-            if (line && line.remove) {
-              line.remove();
-            }
-          } catch (err) {
-            console.warn('Error removing line:', err);
-          }
-        });
-        delete window.workspaceLines[workspace.id];
-      }
-
-      tabsBar.removeChild(tab);
-      tabsContent.removeChild(content);
-      delete openTabs[workspace.id];
-      
-      // Clear workspace data when tab is closed
-      if (window.currentWorkspaceId === workspace.id) {
-        window.currentWorkspaceId = null;
-        console.log('🧹 Cleared data for closed workspace:', workspace.id);
-      }
-      const keys = Object.keys(openTabs);
-      if (keys.length) {
-        activateTab(keys[keys.length - 1]);
-      } else {
-        updateFabVisibility();
-      }
-    });
-
-    tab.addEventListener('click', () => {
-      activateTab(workspace.id);
-    });
-
-    content.id = `tab-${workspace.id}`;
-    content.innerHTML = "";
-
-    fetch('pages/workspace.html')
-      .then(res => res.text())
-      .then(html => {
-        content.innerHTML = html;
-        return import('./workspace.js');
-      })
-      .then(({ init }) => {
-        init(workspace, content.querySelector('.workspace-container'));
-        // Trigger task fetching for the newly opened workspace
-        console.log('🔄 Workspace opened, triggering task fetch for workspace:', workspace.id);
-      });
-
-    openTabs[workspace.id] = { tab, content };
-    activateTab(workspace.id);
-    
-    // Highlight the workspace in the sidebar
-    setTimeout(() => {
-      if (window.highlightWorkspaceById) {
-        window.highlightWorkspaceById(workspace.id);
-      }
-    }, 100);
-    
-    // Ensure tasks are fetched for the newly opened workspace
-    setTimeout(() => {
-      if (window.fetchTasksForWorkspace) {
-        console.log('🔄 Ensuring task fetch for workspace:', workspace.id);
-        try {
-          window.fetchTasksForWorkspace(workspace.id);
-        } catch (error) {
-          console.error('❌ Failed to fetch tasks for workspace:', workspace.id, error);
-        }
-      } else if (window.reloadCurrentPageData) {
-        console.log('🔄 Fallback: reloading page data for workspace:', workspace.id);
-        try {
-          window.reloadCurrentPageData();
-        } catch (error) {
-          console.error('❌ Failed to reload data for workspace:', workspace.id, error);
-        }
-      }
-    }, 200);
-    
     return;
   }
 
@@ -2275,7 +2335,7 @@ export function openWorkspaceTab(workspace, forceNew = false) {
       console.log('🔄 Workspace opened, triggering task fetch for workspace:', workspace.id);
     });
 
-  openTabs[workspace.id] = { tab, content };
+  openTabs[workspace.id] = { tab, content, workspace };
 
   activateTab(workspace.id);
   
@@ -2433,6 +2493,20 @@ function renderNoteInWorkspace(container, note) {
 function activateTab(workspaceId) {
   console.log('🔄 Activating tab for workspace ID:', workspaceId);
   
+  // Check if this is a Google embed tab
+  const tabData = openTabs[workspaceId];
+  if (tabData && tabData.type === 'google-embed') {
+    console.log('✅ Activating Google embed tab');
+    // Simple activation for Google embed tabs
+    for (const id in openTabs) {
+      const { tab, content } = openTabs[id];
+      const isActive = id === workspaceId.toString();
+      tab.classList.toggle('active', isActive);
+      content.style.display = isActive ? 'block' : 'none';
+    }
+    return;
+  }
+  
   // First, hide all lines from all workspaces
   if (window.workspaceLines) {
     Object.keys(window.workspaceLines).forEach(wsId => {
@@ -2502,25 +2576,99 @@ function activateTab(workspaceId) {
   
   // Trigger data reload for the activated workspace
   if (openTabs[workspaceId] && !workspaceId.toString().startsWith('link-')) {
-    const { content } = openTabs[workspaceId];
+    const { content, workspace } = openTabs[workspaceId];
     const workspaceContainer = content.querySelector('.workspace-container');
+    
+    // Find the current active page in this workspace
+    let activePageTab = content.querySelector('.workspace-tab.active');
+    
+    // If no active page, activate the first page
+    if (!activePageTab) {
+      const firstPageTab = content.querySelector('.workspace-tab');
+      if (firstPageTab) {
+        // Remove active class from all tabs in this workspace
+        content.querySelectorAll('.workspace-tab').forEach(tab => tab.classList.remove('active'));
+        // Activate the first tab
+        firstPageTab.classList.add('active');
+        activePageTab = firstPageTab;
+        console.log('🔄 No active page found, activating first page in workspace:', workspaceId);
+        
+        // Also trigger the page switch in the workspace
+        const pageId = parseInt(firstPageTab.dataset.pageId);
+        if (pageId && window.switchToPage) {
+          try {
+            window.switchToPage(pageId);
+            console.log('✅ Switched to first page:', pageId);
+          } catch (error) {
+            console.error('❌ Failed to switch to first page:', pageId, error);
+          }
+        }
+      }
+    }
+    
+    if (activePageTab) {
+      const pageId = parseInt(activePageTab.dataset.pageId);
+      console.log('🔄 Setting workspace context for workspace:', workspaceId, 'page:', pageId);
+      
+      // Update global workspace context
+      window.currentWorkspaceId = parseInt(workspaceId);
+      
+      // Create a page object for the current page with complete workspace info
+      if (pageId && workspace) {
+        window.currentPage = {
+          id: pageId,
+          workspaceId: parseInt(workspaceId),
+          name: activePageTab.textContent || 'Unknown Page',
+          vaultId: workspace.vaultId,
+          folderId: workspace.folderId
+        };
+        console.log('✅ Updated current page context:', window.currentPage);
+      }
+    }
     
     if (workspaceContainer && window.reloadCurrentPageData) {
       console.log('🔄 Triggering data reload for workspace:', workspaceId);
-      // Small delay to ensure DOM is ready
+      // Increased delay to ensure page context is fully set
       setTimeout(() => {
         try {
-          window.reloadCurrentPageData();
+          // Double-check that context is set before reloading
+          if (window.currentPage && window.currentWorkspaceId) {
+            console.log('✅ Context verified before reload:', {
+              currentPage: window.currentPage.id,
+              currentWorkspace: window.currentWorkspaceId
+            });
+            window.reloadCurrentPageData();
+          } else {
+            console.warn('⚠️ Context not ready, retrying in 200ms');
+            setTimeout(() => {
+              if (window.reloadCurrentPageData) {
+                window.reloadCurrentPageData();
+              }
+            }, 200);
+          }
         } catch (error) {
           console.error('❌ Failed to reload data for workspace:', workspaceId, error);
         }
-      }, 100);
+      }, 150);
     } else {
       // If workspace container is not ready, try again after a longer delay
       setTimeout(() => {
         if (window.reloadCurrentPageData) {
           console.log('🔄 Retrying data reload for workspace:', workspaceId);
           try {
+            // Try to set context again before retrying
+            const activePageTab = content.querySelector('.workspace-tab.active');
+            if (activePageTab) {
+              const pageId = parseInt(activePageTab.dataset.pageId);
+              window.currentWorkspaceId = parseInt(workspaceId);
+              if (pageId) {
+                window.currentPage = {
+                  id: pageId,
+                  workspaceId: parseInt(workspaceId),
+                  name: activePageTab.textContent || 'Unknown Page'
+                };
+              }
+            }
             window.reloadCurrentPageData();
           } catch (error) {
             console.error('❌ Failed to reload data for workspace:', workspaceId, error);
@@ -2658,24 +2806,29 @@ document.addEventListener('click', () => {
   contextMenu.classList.add('hidden');
 });
 
+// Function to close all tabs
+window.closeAllTabs = function() {
+  // Iterate through all open tabs and close them
+  for (const id in openTabs) {
+    const { tab, content } = openTabs[id];
+    if (tab && tab.remove) tab.remove();
+    if (content && content.remove) content.remove();
+  }
+
+  // Clear the openTabs object
+  Object.keys(openTabs).forEach(key => delete openTabs[key]);
+
+  // Update FAB visibility
+  updateFabVisibility();
+};
+
 // Handle menu item clicks
 contextMenu.addEventListener('click', (e) => {
   const action = e.target.getAttribute('data-action');
   if (action === 'new-tab') {
     document.getElementById('add-workspace-tab').click();
   } else if (action === 'close-all') {
-    // Iterate through all open tabs and close them
-    for (const id in openTabs) {
-      const { tab, content } = openTabs[id];
-      tab.remove();
-      content.remove();
-    }
-
-    // Clear the openTabs object
-    Object.keys(openTabs).forEach(key => delete openTabs[key]);
-
-    // Update FAB visibility
-    updateFabVisibility();
+    window.closeAllTabs();
   }
   contextMenu.classList.add('hidden');
 });
@@ -2683,6 +2836,103 @@ contextMenu.addEventListener('click', (e) => {
 document.getElementById('new-tab-dropdown').addEventListener('click', function () {
   document.getElementById('add-workspace-tab').click();
 });
+
+// Google Embed Tab functionality
+function openGoogleEmbedTab() {
+  const tabId = "google-embed-" + Date.now();
+  const tabsBar = document.getElementById('tabs-bar');
+  const tabsContent = document.getElementById('tabs-content');
+  
+  if (!tabsBar || !tabsContent) {
+    console.error('Tabs container not found');
+    return;
+  }
+
+  // Create tab element
+  const tab = document.createElement('div');
+  tab.className = 'tab';
+  tab.id = tabId;
+  tab.dataset.workspaceId = tabId;
+  tab.innerHTML = `
+    <span>Google</span>
+    <span class="close-tab" onclick="closeTab('${tabId}')">&times;</span>
+  `;
+
+  // Create content element with Google embedded iframe
+  const content = document.createElement('div');
+  content.className = 'tab-pane';
+  content.id = `content-${tabId}`;
+  content.innerHTML = `
+    <div style="width: 100%; height: 100vh; display: flex; flex-direction: column;">
+      <div style="padding: 10px; background-color: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+        <h3 style="margin: 0; color: #495057;">Google Search</h3>
+      </div>
+      <iframe 
+        src="https://www.google.com/webhp?igu=1" 
+        style="width: 100%; height: calc(100vh - 60px); border: none;"
+        title="Google Search"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox">
+      </iframe>
+    </div>
+  `;
+
+  // Add click event to tab
+  tab.addEventListener('click', () => {
+    activateTab(tabId);
+  });
+
+  // Store in openTabs
+  openTabs[tabId] = {
+    tab: tab,
+    content: content,
+    type: 'google-embed'
+  };
+
+  // Insert tab before add button
+  const addButton = document.getElementById('add-workspace-tab');
+  tabsBar.insertBefore(tab, addButton);
+  tabsContent.appendChild(content);
+
+  // Activate the new tab
+  activateTab(tabId);
+  
+  console.log('✅ Google embed tab created:', tabId);
+}
+
+// Function to close a tab
+window.closeTab = function(tabId) {
+  const tab = document.getElementById(tabId);
+  const content = document.getElementById(`content-${tabId}`);
+  
+  if (tab && content) {
+    // Remove the tab and its content
+    tab.remove();
+    content.remove();
+    
+    // Remove from openTabs
+    delete openTabs[tabId];
+    
+    // If this was the active tab, activate another tab
+    const remainingTabs = document.querySelectorAll('.workspace-tab');
+    if (remainingTabs.length > 0 && tab.classList.contains('active')) {
+      // Find the first remaining tab and activate it
+      const firstTab = remainingTabs[0];
+      const workspaceId = firstTab.getAttribute('data-workspace-id');
+      if (workspaceId) {
+        activateTab(workspaceId);
+      } else {
+        // Handle Google embed tabs or other tab types
+        firstTab.classList.add('active');
+        const firstContent = document.getElementById(`content-${firstTab.id}`);
+        if (firstContent) {
+          firstContent.style.display = 'block';
+        }
+      }
+    }
+  }
+  
+  console.log('✅ Tab closed:', tabId);
+};
 
 // Save File Modal functionality
 
