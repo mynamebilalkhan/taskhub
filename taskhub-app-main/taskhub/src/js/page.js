@@ -1,4 +1,5 @@
 import { openWorkspaceTab } from '../js/dashboard.js';
+import { WorkspaceScope } from './workspace-scope.js';
 
 // Register quill-better-table module with improved error handling
 let moduleRegistered = false;
@@ -125,12 +126,19 @@ let tempLine = null;
 let dragFromEl = null;
 let ghost = null;
 let grid, prevWidth, prevHeight;
-export async function init(page, container) {
+export async function init(page, container, workspaceScope = null) {
     const { invoke } = window.__TAURI__.core;
+    
+    // Initialize workspace scope for this page
+    const workspaceScope = new WorkspaceScope();
+    workspaceScope.setContext(page.workspaceId, page.id);
+    
+    // Store workspace scope for cleanup
+    container.workspaceScope = workspaceScope;
   
     // Helper function to show messages
     function showMessage(message, type = 'info') {
-      const messageEl = container.querySelector('#page-message');
+      const messageEl = workspaceScope ? workspaceScope.getElementById('page-message') : container.querySelector('#page-message');
       if (!messageEl) return;
       
       messageEl.textContent = message;
@@ -145,59 +153,93 @@ export async function init(page, container) {
 
     // Helper function to refresh/reset task form
     function refreshTaskForm() {
-      const taskForm = container.querySelector("#add-task-modal");
+      const taskForm = workspaceScope ? workspaceScope.getElementById('add-task-modal') : container.querySelector("#add-task-modal");
       if (taskForm) {
-        container.querySelector("#task-title").value = "";
-        container.querySelector("#task-description").value = "";
-        container.querySelector("#task-due-date").value = "";
-        container.querySelector("#task-status").value = "";
-        container.querySelector("#task-priority").value = "";
-        container.querySelector("#task-assigned-id").selectedIndex = 0;
-        container.querySelector("#task-industry").value = "";
+        const taskTitle = workspaceScope ? workspaceScope.getElementById('task-title') : container.querySelector("#task-title");
+        const taskDesc = workspaceScope ? workspaceScope.getElementById('task-description') : container.querySelector("#task-description");
+        const taskDue = workspaceScope ? workspaceScope.getElementById('task-due-date') : container.querySelector("#task-due-date");
+        const taskStatus = workspaceScope ? workspaceScope.getElementById('task-status') : container.querySelector("#task-status");
+        const taskPriority = workspaceScope ? workspaceScope.getElementById('task-priority') : container.querySelector("#task-priority");
+        const taskAssigned = workspaceScope ? workspaceScope.getElementById('task-assigned-id') : container.querySelector("#task-assigned-id");
+        const taskIndustry = workspaceScope ? workspaceScope.getElementById('task-industry') : container.querySelector("#task-industry");
+        
+        if (taskTitle) taskTitle.value = "";
+        if (taskDesc) taskDesc.value = "";
+        if (taskDue) taskDue.value = "";
+        if (taskStatus) taskStatus.value = "";
+        if (taskPriority) taskPriority.value = "";
+        if (taskAssigned) taskAssigned.selectedIndex = 0;
+        if (taskIndustry) taskIndustry.value = "";
       }
     }
 
     // Helper function to refresh/reset card form
     function refreshCardForm() {
-      const cardForm = container.querySelector("#add-card-modal");
+      const cardForm = workspaceScope ? workspaceScope.getElementById('add-card-modal') : container.querySelector("#add-card-modal");
       if (cardForm) {
-        container.querySelector("#card-title").value = "";
-        container.querySelector("#card-description").value = "";
-        container.querySelector("#card-status").selectedIndex = 0;
-        container.querySelector("#card-priority").value = "";
-        container.querySelector("#card-category").value = "";
-        container.querySelector("#card-assigned-to").selectedIndex = 0;
-        container.querySelector("#card-due-date").value = "";
+        const cardTitle = workspaceScope ? workspaceScope.getElementById('card-title') : container.querySelector("#card-title");
+        const cardDesc = workspaceScope ? workspaceScope.getElementById('card-description') : container.querySelector("#card-description");
+        const cardStatus = workspaceScope ? workspaceScope.getElementById('card-status') : container.querySelector("#card-status");
+        const cardPriority = workspaceScope ? workspaceScope.getElementById('card-priority') : container.querySelector("#card-priority");
+        const cardCategory = workspaceScope ? workspaceScope.getElementById('card-category') : container.querySelector("#card-category");
+        const cardAssigned = workspaceScope ? workspaceScope.getElementById('card-assigned-to') : container.querySelector("#card-assigned-to");
+        const cardDue = workspaceScope ? workspaceScope.getElementById('card-due-date') : container.querySelector("#card-due-date");
+        
+        if (cardTitle) cardTitle.value = "";
+        if (cardDesc) cardDesc.value = "";
+        if (cardStatus) cardStatus.selectedIndex = 0;
+        if (cardPriority) cardPriority.value = "";
+        if (cardCategory) cardCategory.value = "";
+        if (cardAssigned) cardAssigned.selectedIndex = 0;
+        if (cardDue) cardDue.value = "";
       }
     }
 
     // Helper function to refresh/reset update task form
     function refreshUpdateTaskForm() {
-      const updateTaskForm = container.querySelector("#update-task-modal");
+      const updateTaskForm = workspaceScope ? workspaceScope.getElementById('update-task-modal') : container.querySelector("#update-task-modal");
       if (updateTaskForm) {
-        container.querySelector("#update-task-id").value = "";
-        container.querySelector("#update-task-title").value = "";
-        container.querySelector("#update-task-description").value = "";
-        container.querySelector("#update-task-due-date").value = "";
-        container.querySelector("#update-task-status").value = "";
-        container.querySelector("#update-task-priority").value = "";
-        container.querySelector("#update-task-assigned-id").selectedIndex = 0;
-        container.querySelector("#update-task-industry").value = "";
+        const updateTaskId = workspaceScope ? workspaceScope.getElementById('update-task-id') : container.querySelector("#update-task-id");
+        const updateTaskTitle = workspaceScope ? workspaceScope.getElementById('update-task-title') : container.querySelector("#update-task-title");
+        const updateTaskDesc = workspaceScope ? workspaceScope.getElementById('update-task-description') : container.querySelector("#update-task-description");
+        const updateTaskDue = workspaceScope ? workspaceScope.getElementById('update-task-due-date') : container.querySelector("#update-task-due-date");
+        const updateTaskStatus = workspaceScope ? workspaceScope.getElementById('update-task-status') : container.querySelector("#update-task-status");
+        const updateTaskPriority = workspaceScope ? workspaceScope.getElementById('update-task-priority') : container.querySelector("#update-task-priority");
+        const updateTaskAssigned = workspaceScope ? workspaceScope.getElementById('update-task-assigned-id') : container.querySelector("#update-task-assigned-id");
+        const updateTaskIndustry = workspaceScope ? workspaceScope.getElementById('update-task-industry') : container.querySelector("#update-task-industry");
+        
+        if (updateTaskId) updateTaskId.value = "";
+        if (updateTaskTitle) updateTaskTitle.value = "";
+        if (updateTaskDesc) updateTaskDesc.value = "";
+        if (updateTaskDue) updateTaskDue.value = "";
+        if (updateTaskStatus) updateTaskStatus.value = "";
+        if (updateTaskPriority) updateTaskPriority.value = "";
+        if (updateTaskAssigned) updateTaskAssigned.selectedIndex = 0;
+        if (updateTaskIndustry) updateTaskIndustry.value = "";
       }
     }
 
     // Helper function to refresh/reset update card form
     function refreshUpdateCardForm() {
-      const updateCardForm = container.querySelector("#update-card-modal");
+      const updateCardForm = workspaceScope ? workspaceScope.getElementById('update-card-modal') : container.querySelector("#update-card-modal");
       if (updateCardForm) {
-        container.querySelector("#update-card-id").value = "";
-        container.querySelector("#update-card-title").value = "";
-        container.querySelector("#update-card-description").value = "";
-        container.querySelector("#update-card-status").selectedIndex = 0;
-        container.querySelector("#update-card-priority").value = "";
-        container.querySelector("#update-card-category").value = "";
-        container.querySelector("#update-card-assigned-to").selectedIndex = 0;
-        container.querySelector("#update-card-due-date").value = "";
+        const updateCardId = workspaceScope ? workspaceScope.getElementById('update-card-id') : container.querySelector("#update-card-id");
+        const updateCardTitle = workspaceScope ? workspaceScope.getElementById('update-card-title') : container.querySelector("#update-card-title");
+        const updateCardDesc = workspaceScope ? workspaceScope.getElementById('update-card-description') : container.querySelector("#update-card-description");
+        const updateCardStatus = workspaceScope ? workspaceScope.getElementById('update-card-status') : container.querySelector("#update-card-status");
+        const updateCardPriority = workspaceScope ? workspaceScope.getElementById('update-card-priority') : container.querySelector("#update-card-priority");
+        const updateCardCategory = workspaceScope ? workspaceScope.getElementById('update-card-category') : container.querySelector("#update-card-category");
+        const updateCardAssigned = workspaceScope ? workspaceScope.getElementById('update-card-assigned-to') : container.querySelector("#update-card-assigned-to");
+        const updateCardDue = workspaceScope ? workspaceScope.getElementById('update-card-due-date') : container.querySelector("#update-card-due-date");
+        
+        if (updateCardId) updateCardId.value = "";
+        if (updateCardTitle) updateCardTitle.value = "";
+        if (updateCardDesc) updateCardDesc.value = "";
+        if (updateCardStatus) updateCardStatus.selectedIndex = 0;
+        if (updateCardPriority) updateCardPriority.value = "";
+        if (updateCardCategory) updateCardCategory.value = "";
+        if (updateCardAssigned) updateCardAssigned.selectedIndex = 0;
+        if (updateCardDue) updateCardDue.value = "";
       }
     }
 
@@ -265,7 +307,7 @@ export async function init(page, container) {
         
         // Store reference for cleanup and attach listener
         addTaskBtn._taskAddHandler = addHandler;
-        addTaskBtn.addEventListener("click", addHandler);
+        workspaceScope.addEventListener(addTaskBtn, "click", addHandler);
         console.log('✅ Add task button event listener attached for page:', page.name);
       }
       
@@ -372,7 +414,7 @@ export async function init(page, container) {
         
         // Store reference for cleanup and attach listener
         saveBtn._taskSaveHandler = saveHandler;
-        saveBtn.addEventListener("click", saveHandler);
+        workspaceScope.addEventListener(saveBtn, "click", saveHandler);
         console.log('✅ Save button event listener attached for page:', page.name);
       }
       
@@ -394,7 +436,7 @@ export async function init(page, container) {
         
         // Store reference for cleanup and attach listener
         cancelBtn._taskCancelHandler = cancelHandler;
-        cancelBtn.addEventListener("click", cancelHandler);
+        workspaceScope.addEventListener(cancelBtn, "click", cancelHandler);
         
       }
       
@@ -478,11 +520,11 @@ export async function init(page, container) {
       document.body.appendChild(modalOverlay);
 
       // Add event listeners
-      modalContent.querySelector('#cancelDelete').addEventListener('click', () => {
+      workspaceScope.addEventListener(modalContent.querySelector('#cancelDelete'), 'click', () => {
         document.body.removeChild(modalOverlay);
       });
 
-      modalContent.querySelector('#confirmDelete').addEventListener('click', async () => {
+      workspaceScope.addEventListener(modalContent.querySelector('#confirmDelete'), 'click', async () => {
         try {
           console.log('🗑️ Deleting note with ID:', noteId);
           await window.__TAURI__.core.invoke("delete_textbox", { 
@@ -505,7 +547,7 @@ export async function init(page, container) {
       });
 
       // Close modal when clicking outside
-      modalOverlay.addEventListener('click', (e) => {
+      workspaceScope.addEventListener(modalOverlay, 'click', (e) => {
         if (e.target === modalOverlay) {
           document.body.removeChild(modalOverlay);
         }
@@ -538,19 +580,19 @@ export async function init(page, container) {
       });
       
       if (deleteNoteCloseBtn) {
-        deleteNoteCloseBtn.addEventListener('click', () => {
+        workspaceScope.addEventListener(deleteNoteCloseBtn, 'click', () => {
           deleteNoteModal.classList.add('hidden');
         });
       }
       
       if (deleteNoteCancelBtn) {
-        deleteNoteCancelBtn.addEventListener('click', () => {
+        workspaceScope.addEventListener(deleteNoteCancelBtn, 'click', () => {
           deleteNoteModal.classList.add('hidden');
         });
       }
       
       if (deleteNoteDeleteBtn) {
-        deleteNoteDeleteBtn.addEventListener('click', async () => {
+        workspaceScope.addEventListener(deleteNoteDeleteBtn, 'click', async () => {
           if (window.currentNoteToDelete) {
             try {
               console.log('🗑️ Deleting note with ID:', window.currentNoteToDelete);
@@ -591,19 +633,19 @@ export async function init(page, container) {
       const deleteImageDeleteBtn = container.querySelector("#delete-image-confirmation-delete-btn");
       
       if (deleteImageCloseBtn) {
-        deleteImageCloseBtn.addEventListener('click', () => {
+        workspaceScope.addEventListener(deleteImageCloseBtn, 'click', () => {
           deleteImageModal.classList.add('hidden');
         });
       }
       
       if (deleteImageCancelBtn) {
-        deleteImageCancelBtn.addEventListener('click', () => {
+        workspaceScope.addEventListener(deleteImageCancelBtn, 'click', () => {
           deleteImageModal.classList.add('hidden');
         });
       }
       
       if (deleteImageDeleteBtn) {
-        deleteImageDeleteBtn.addEventListener('click', async () => {
+        workspaceScope.addEventListener(deleteImageDeleteBtn, 'click', async () => {
           if (window.currentImageToDelete) {
             try {
               console.log('🗑️ Deleting image with ID:', window.currentImageToDelete);
@@ -809,7 +851,7 @@ export async function init(page, container) {
         card.y = newY;
         
         // Update DOM element
-        const cardElement = document.getElementById(`card-${card.id}`);
+        const cardElement = container.querySelector(`#card-${card.id}`);
         if (cardElement) {
           cardElement.style.transform = `translate(${newX}px, ${newY}px)`;
           cardElement.setAttribute("data-x", newX);
@@ -831,7 +873,7 @@ export async function init(page, container) {
       console.log(`🎯 Next card will be positioned at: (${nextPos.x}, ${nextPos.y})`);
       
       // Temporarily show a preview indicator (optional visual feedback)
-      const grid = document.getElementById("cards-grid");
+      const grid = container.querySelector("#cards-grid");
       if (grid) {
         const preview = document.createElement("div");
         preview.id = "card-position-preview";
@@ -1078,7 +1120,7 @@ export async function init(page, container) {
     window.currentLines = [];
     let currentCards = []; 
     let clickedCardId = null;
-    const cardContextMenu = document.getElementById("card-context-menu");
+    const cardContextMenu = container.querySelector("#card-context-menu");
     
     // Declare data variables that will be updated by reloadPageData
     let tasks, notes, images, cards, files, workspace, workspacesForTasks = {};
@@ -1418,7 +1460,7 @@ export async function init(page, container) {
     };
     
     // Delete confirmation handlers are now inline - no setup needed
-    grid = document.getElementById('cards-grid');
+    grid = container.querySelector('#cards-grid');
     prevWidth  = grid.clientWidth;
     prevHeight = grid.clientHeight;
 
@@ -1439,12 +1481,12 @@ export async function init(page, container) {
     console.log('🔄 Using unified layout without tabs');
 
     makeCardsDraggable();
-    window.addEventListener('resize', onResize);
+    workspaceScope.addEventListener(window, 'resize', onResize);
     
     // Set up FAB button for adding cards
     const addCardFab = container.querySelector("#add-card-fab");
     if (addCardFab) {
-      addCardFab.addEventListener("click", () => {
+      workspaceScope.addEventListener(addCardFab, "click", () => {
         const cardModal = container.querySelector("#add-card-modal");
         if (cardModal) {
           cardModal.classList.remove("hidden");
@@ -1484,7 +1526,7 @@ export async function init(page, container) {
     if (wrapper && hasContent) {
       wrapper.classList.remove("hidden");
     }
-    window.addEventListener("resize", () => {
+    workspaceScope.addEventListener(window, "resize", () => {
       if (window.currentLines && Array.isArray(window.currentLines)) {
         window.currentLines.forEach(line => {
           try {
@@ -1506,7 +1548,7 @@ export async function init(page, container) {
     });
       const tabPane = container.closest(".tab-pane");
       if (tabPane) {
-        tabPane.addEventListener("scroll", () => {
+        workspaceScope.addEventListener(tabPane, "scroll", () => {
           if (window.currentLines && Array.isArray(window.currentLines)) {
             window.currentLines.forEach(line => {
               try {
@@ -1532,7 +1574,7 @@ export async function init(page, container) {
 const saveCardBtn = container.querySelector("#save-card-btn");
 const cancelCardBtn = container.querySelector("#cancel-card-btn");
 function renderSingleCard(card) {
-  const grid = document.getElementById("cards-grid");
+  const grid = container.querySelector("#cards-grid");
 
   const el = document.createElement("div");
   el.classList.add("task-card", `color-${card.id % 6}`);
@@ -1555,8 +1597,8 @@ function renderSingleCard(card) {
 
   
   grid.appendChild(el);
-  // Cards are now always visible in their tab - no need to toggle hidden class
-  // document.querySelector(".cards-section").classList.remove("hidden");
+  // Update cards section visibility based on card count
+  updateEmptyWorkspaceVisibility();
   
   // Initialize global lines if not already initialized
   if (!window.currentLines) {
@@ -1622,13 +1664,13 @@ function renderSingleCard(card) {
 }
 const addCardBtn = container.querySelector("#add-card-btn");
 if (addCardBtn) {
-  addCardBtn.addEventListener("click", () => {
+  workspaceScope.addEventListener(addCardBtn, "click", () => {
     cardModal.classList.remove("hidden");
   });
 }
 const addTaskBtn = container.querySelector("#add-task-btn");
 if (addTaskBtn) {
-  addTaskBtn.addEventListener("click", () => {
+  workspaceScope.addEventListener(addTaskBtn, "click", () => {
     modal.classList.remove("hidden");
   });
 }
@@ -1636,7 +1678,7 @@ if (addTaskBtn) {
 // Add click event listener for creating notes on empty whitespace
 const pageBlocksContainer = container.querySelector("#page-blocks-container");
 if (pageBlocksContainer) {
-  pageBlocksContainer.addEventListener("click", async (e) => {
+  workspaceScope.addEventListener(pageBlocksContainer, "click", async (e) => {
     // Only create note if clicking directly on the container (empty space)
     if (e.target === pageBlocksContainer) {
       console.log('📝 Creating note from empty space click');
@@ -1652,7 +1694,7 @@ if (pageBlocksContainer) {
     }
   });
 }
-document.addEventListener("contextmenu", (e) => {
+workspaceScope.addEventListener(document, "contextmenu", (e) => {
   const card = e.target.closest(".task-card");
   if (card) {
     e.preventDefault();
@@ -1683,12 +1725,12 @@ document.addEventListener("contextmenu", (e) => {
     cardContextMenu.classList.add("hidden");
   }
 });
-document.addEventListener("click", (e) => {
+workspaceScope.addEventListener(document, "click", (e) => {
   if (!e.target.closest("#card-context-menu")) {
     cardContextMenu.classList.add("hidden");
   }
 });
-cardContextMenu.addEventListener("click", async (e) => {
+workspaceScope.addEventListener(cardContextMenu, "click", async (e) => {
   const action = e.target.dataset.action;
   if (!action || !clickedCardId) return;
 
@@ -1771,9 +1813,9 @@ async function handleUpdateTask(task) {
       document.removeEventListener("keydown", escapeHandler);
     }
   };
-  document.addEventListener("keydown", escapeHandler);
+  workspaceScope.addEventListener(document, "keydown", escapeHandler);
   
-  newSaveBtn.addEventListener("click", async () => {
+  workspaceScope.addEventListener(newSaveBtn, "click", async () => {
     try {
       const assignedToId = parseInt(container.querySelector("#update-task-assigned-id").value);
       const assignedUser = uniqueUsers.find(u => u[0] === assignedToId);
@@ -1862,13 +1904,13 @@ async function handleLinkTo(cardId) {
     </select>
   `;
 
-  const modal = document.getElementById("custom-modal");
-  const modalTitle = document.getElementById("modal-title");
-  const modalLabel = document.getElementById("modal-label");
-  const modalInput = document.getElementById("modal-input");
-  const modalTextarea = document.getElementById("modal-textarea");
-  const cancelBtn = document.getElementById("modal-cancel-btn");
-  const okBtn = document.getElementById("modal-ok-btn");
+  const modal = container.querySelector("#custom-modal");
+    const modalTitle = container.querySelector("#modal-title");
+    const modalLabel = container.querySelector("#modal-label");
+    const modalInput = container.querySelector("#modal-input");
+    const modalTextarea = container.querySelector("#modal-textarea");
+    const cancelBtn = container.querySelector("#modal-cancel-btn");
+    const okBtn = container.querySelector("#modal-ok-btn");
 
   modalTitle.textContent = "Link to Card";
   modalLabel.textContent = "Select Card to Link:";
@@ -1879,7 +1921,7 @@ async function handleLinkTo(cardId) {
   if(existingSelect) existingSelect.remove();
 
   modalLabel.insertAdjacentHTML('afterend', selectHtml);
-  const selectElement = document.getElementById("link-to-select");
+  const selectElement = container.querySelector("#link-to-select");
 
   modal.classList.remove("hidden");
   document.body.style.overflow = 'hidden';
@@ -2007,6 +2049,7 @@ saveCardBtn.addEventListener("click", async () => {
     updateCardPosition(createdCard.id, newPosition.x, newPosition.y);
 
     cards.push(createdCard);
+    currentCards.push(createdCard);
     renderSingleCard(createdCard);
     cardModal.classList.add("hidden");
     
@@ -2191,10 +2234,15 @@ async function handleDeleteCard(cardId) {
   
   // Proceed with cleanup regardless (for 500 errors)
   try {
-    // Remove from local array by finding and removing the card
+    // Remove from local arrays by finding and removing the card
     const cardIndex = cards.findIndex(c => c.id === cardId);
     if (cardIndex !== -1) {
       cards.splice(cardIndex, 1);
+    }
+    
+    const currentCardIndex = currentCards.findIndex(c => c.id === cardId);
+    if (currentCardIndex !== -1) {
+      currentCards.splice(currentCardIndex, 1);
     }
     
     // Remove from DOM
@@ -2475,7 +2523,7 @@ async function handleDeleteCard(cardId) {
     // Add Column button handler
     const addColumnBtn = container.querySelector(".add-column");
 if (addColumnBtn) {
-  addColumnBtn.addEventListener("click", () => {
+  workspaceScope.addEventListener(addColumnBtn, "click", () => {
     const modal = container.querySelector("#column-selector-modal");
     const checkboxContainer = container.querySelector("#column-checkboxes");
     
@@ -2489,13 +2537,18 @@ if (addColumnBtn) {
     columnsHeader.style.padding = "16px 16px 8px 16px";
     checkboxContainer.appendChild(columnsHeader);
     
-    availableColumns.forEach((col, index) => {
+    // Filter out status, priority, and assignedToName columns
+    const filteredColumns = availableColumns.filter(col => 
+      col.id !== 'status' && col.id !== 'priority' && col.id !== 'assignedToName'
+    );
+    
+    filteredColumns.forEach((col, index) => {
       const columnItem = document.createElement("div");
       columnItem.style.display = "flex";
       columnItem.style.justifyContent = "space-between";
       columnItem.style.alignItems = "center";
       columnItem.style.padding = "8px 16px";
-      columnItem.style.borderBottom = index === availableColumns.length - 1 ? "none" : "1px solid #f0f0f0";
+      columnItem.style.borderBottom = index === filteredColumns.length - 1 ? "none" : "1px solid #f0f0f0";
       
       // Column name and required indicator
       const columnLabel = document.createElement("div");
@@ -2536,7 +2589,7 @@ eyeIcon.innerHTML = col.visible ? visibleEyeSVG : hiddenEyeSVG;
 eyeIcon.style.color = col.visible ? "#0066cc" : "#666";
 
 if (!col.required) {
-  eyeIcon.addEventListener("click", () => {
+  workspaceScope.addEventListener(eyeIcon, "click", () => {
     col.visible = !col.visible;
     eyeIcon.innerHTML = col.visible ? visibleEyeSVG : hiddenEyeSVG;
     eyeIcon.style.color = col.visible ? "#0066cc" : "#666";
@@ -2556,7 +2609,7 @@ if (!col.required) {
     const columnModal = container.querySelector("#column-selector-modal");
     
     if (applyColumnsBtn) {
-      applyColumnsBtn.addEventListener("click", () => {
+      workspaceScope.addEventListener(applyColumnsBtn, "click", () => {
         const checkboxes = container.querySelectorAll("#column-checkboxes input[type='checkbox']");
         const columnConfig = {};
         
@@ -2579,7 +2632,7 @@ if (!col.required) {
     }
     
     if (cancelColumnsBtn) {
-      cancelColumnsBtn.addEventListener("click", () => {
+      workspaceScope.addEventListener(cancelColumnsBtn, "click", () => {
         columnModal.classList.add("hidden");
       });
     }
@@ -2587,7 +2640,7 @@ if (!col.required) {
     let currentTaskMenuButton = null;
 
     // Use event delegation since tbody might be recreated
-    container.addEventListener("click", (e) => {
+    workspaceScope.addEventListener(container, "click", (e) => {
       const btn = e.target.closest(".task-menu-btn");
       if (!btn) return;
       
@@ -2629,7 +2682,7 @@ if (!col.required) {
       // Update context menu buttons based on task status
       updateTaskContextMenu(task);
     });
-    document.addEventListener("click", (e) => {
+    workspaceScope.addEventListener(document, "click", (e) => {
       const clickedInsideMenu = e.target.closest(".task-context-menu");
       const clickedButton = e.target.closest(".task-menu-btn");
       if (!clickedInsideMenu && !clickedButton) {
@@ -2638,7 +2691,7 @@ if (!col.required) {
       }
     });
   
-    taskContextMenu.addEventListener("click", async (e) => {
+    workspaceScope.addEventListener(taskContextMenu, "click", async (e) => {
       const action = e.target.dataset.action;
       const taskIndex = taskContextMenu.dataset.taskIndex;
       const task = relevantTasks[taskIndex];
@@ -2815,8 +2868,8 @@ if (!col.required) {
       }
 
       connections.forEach(conn => {
-        const fromEl = document.getElementById(`card-${conn.fromCardId}`);
-        const toEl = document.getElementById(`card-${conn.toCardId}`);
+        const fromEl = container.querySelector(`#card-${conn.fromCardId}`);
+    const toEl = container.querySelector(`#card-${conn.toCardId}`);
         if (fromEl && toEl) {
           try {
            const line = new LeaderLine(fromEl, toEl, {
@@ -2836,7 +2889,7 @@ if (!col.required) {
       });
 
       // Add scroll event listener to reposition lines when scrolling
-      const cardsGrid = document.getElementById("cards-grid");
+      const cardsGrid = container.querySelector("#cards-grid");
       if (cardsGrid) {
         cardsGrid.addEventListener('scroll', () => {
           if (window.currentLines && Array.isArray(window.currentLines)) {
@@ -2860,7 +2913,7 @@ if (!col.required) {
         });
 
         // Add resize event listener to reposition lines when window resizes
-        window.addEventListener('resize', () => {
+        workspaceScope.addEventListener(window, 'resize', () => {
           if (window.currentLines && Array.isArray(window.currentLines)) {
             window.currentLines.forEach(line => {
               try {
@@ -2885,8 +2938,12 @@ if (!col.required) {
     
   
       function renderCards(cards) {
-        const grid = document.getElementById("cards-grid");
+        const grid = workspaceScope ? workspaceScope.getElementById('cards-grid') : container.querySelector("#cards-grid");
         currentCards = cards;  
+        if (!grid) {
+          console.error('❌ Cards grid not found');
+          return;
+        }
         grid.innerHTML = "";
         
         if (cards.length === 0) {
@@ -3029,9 +3086,9 @@ if (!col.required) {
       window.renderNewImageInWorkspace = async function(image, pageId) {
         console.log("Adding new image to workspace page:", image);
         
-        const container = document.getElementById("page-blocks-container");
-        if (!container) {
-          console.error("page-blocks-container not found");
+        const pageBlocksContainer = container.querySelector("#page-blocks-container");
+         if (!pageBlocksContainer) {
+           console.error("page-blocks-container not found");
           return;
         }
 
@@ -3526,10 +3583,10 @@ if (!col.required) {
           const removeMenu = (e) => {
             if (!contextMenu.contains(e.target)) {
               contextMenu.remove();
-              document.removeEventListener('click', removeMenu);
+              workspaceScope.removeEventListener(document, 'click', removeMenu);
             }
           };
-          document.addEventListener('click', removeMenu);
+          workspaceScope.addEventListener(document, 'click', removeMenu);
         }, 10);
       }
 
@@ -3541,10 +3598,10 @@ if (!col.required) {
       tasks: tasks.length,
       pageId
     });
-        const container = document.getElementById("page-blocks-container");
-        
-        // Clear container first
-        container.innerHTML = '';
+        const pageBlocksContainer = container.querySelector("#page-blocks-container");
+         
+         // Clear container first
+         pageBlocksContainer.innerHTML = '';
         
         // Don't manipulate task table - let it stay in its original position
         // The task table should be handled by renderTasks function only
@@ -4392,7 +4449,7 @@ if (!col.required) {
         picker._hideHandler = hidePickerHandler;
         picker._toggleHandler = togglePicker;
         picker._tableBtn = tableBtn;
-        document.addEventListener('click', hidePickerHandler);
+        workspaceScope.addEventListener(document, 'click', hidePickerHandler);
         
         // Mark this editor as having table picker set up
         editorDiv.dataset.tablePickerSetup = 'true';
@@ -4429,7 +4486,7 @@ if (!col.required) {
       export async function addEmptyNoteToPage(pageId, container) {
         console.log('📝 addEmptyNoteToPage called with pageId:', pageId);
         const { invoke } = window.__TAURI__.core;
-        const containerEl = document.getElementById("page-blocks-container");
+        const containerEl = container.querySelector("#page-blocks-container");
         
         if (!containerEl) {
           console.error('❌ page-blocks-container not found');
@@ -4713,13 +4770,13 @@ if (!col.required) {
       }
   function showCustomPrompt({ title, label, okText, defaultValue = "", multiline = false }) {
     return new Promise((resolve, reject) => {
-      const modal = document.getElementById("custom-modal-task-workspace");
-      const modalTitle = document.getElementById("modal-title-task-workspace");
-      const modalLabel = document.getElementById("modal-label-task-workspace");
-      const input = document.getElementById("modal-input-task-workspace");
-      const textarea = document.getElementById("modal-textarea-task-workspace");
-      const cancelBtn = document.getElementById("modal-cancel-btn-task-workspace");
-      const okBtn = document.getElementById("modal-ok-btn-task-workspace");
+      const modal = document.querySelector("#custom-modal-task-workspace");
+  const modalTitle = document.querySelector("#modal-title-task-workspace");
+  const modalLabel = document.querySelector("#modal-label-task-workspace");
+  const input = document.querySelector("#modal-input-task-workspace");
+  const textarea = document.querySelector("#modal-textarea-task-workspace");
+  const cancelBtn = document.querySelector("#modal-cancel-btn-task-workspace");
+  const okBtn = document.querySelector("#modal-ok-btn-task-workspace");
   
       if (!modal || !modalTitle || !modalLabel || !input || !textarea) {
         console.error("Modal elements not found in DOM.");
@@ -4830,11 +4887,11 @@ if (!col.required) {
 
   // Save File Modal functionality
   function showSaveFileModal(fileName, fileUrl) {
-    const modal = document.getElementById('save-file-modal');
-    const fileNameElement = document.getElementById('save-file-name');
-    const chooseLocationBtn = document.getElementById('choose-location');
-    const cancelBtn = document.getElementById('save-file-cancel-btn');
-    const closeBtn = document.getElementById('save-file-close-btn');
+    const modal = document.querySelector('#save-file-modal');
+  const fileNameElement = document.querySelector('#save-file-name');
+  const chooseLocationBtn = document.querySelector('#choose-location');
+  const cancelBtn = document.querySelector('#save-file-cancel-btn');
+  const closeBtn = document.querySelector('#save-file-close-btn');
 
     if (!modal || !fileNameElement) {
       console.error('Save file modal elements not found');
@@ -4915,13 +4972,13 @@ if (!col.required) {
 
   function showCustomCardPrompt({ title, label, okText, defaultValue = "", multiline = false }) {
     return new Promise((resolve, reject) => {
-      const modal = document.getElementById("custom-modal-card-workspace");
-      const modalTitle = document.getElementById("modal-title-card-workspace");
-      const modalLabel = document.getElementById("modal-label-card-workspace");
-      const input = document.getElementById("modal-input-card-workspace");
-      const textarea = document.getElementById("modal-textarea-card-workspace");
-      const cancelBtn = document.getElementById("modal-cancel-btn-card-workspace");
-      const okBtn = document.getElementById("modal-ok-btn-card-workspace");
+      const modal = document.querySelector("#custom-modal-card-workspace");
+  const modalTitle = document.querySelector("#modal-title-card-workspace");
+  const modalLabel = document.querySelector("#modal-label-card-workspace");
+  const input = document.querySelector("#modal-input-card-workspace");
+  const textarea = document.querySelector("#modal-textarea-card-workspace");
+  const cancelBtn = document.querySelector("#modal-cancel-btn-card-workspace");
+  const okBtn = document.querySelector("#modal-ok-btn-card-workspace");
   
       if (!modal || !modalTitle || !modalLabel || !input || !textarea) {
         console.error("Modal elements not found in DOM.");
@@ -5042,7 +5099,7 @@ function switchToTab(tabId) {
 
   // Add active class to selected button and panel
   const activeButton = document.querySelector(`[data-tab="${tabId}"]`);
-  const activePanel = document.getElementById(tabId);
+  const activePanel = document.querySelector(`#${tabId}`);
 
   console.log('Active button found:', !!activeButton);
   console.log('Active panel found:', !!activePanel);
@@ -5083,7 +5140,7 @@ function switchToTab(tabId) {
  * Show page loading overlay
  */
 function showPageLoading(message = 'Loading...') {
-  const loadingOverlay = document.getElementById('page-loading-overlay');
+  const loadingOverlay = document.querySelector('#page-loading-overlay');
   const loadingText = loadingOverlay?.querySelector('.loading-text');
 
   if (loadingOverlay) {
@@ -5099,7 +5156,7 @@ function showPageLoading(message = 'Loading...') {
  * Hide page loading overlay
  */
 function hidePageLoading() {
-  const loadingOverlay = document.getElementById('page-loading-overlay');
+  const loadingOverlay = document.querySelector('#page-loading-overlay');
 
   if (loadingOverlay) {
     loadingOverlay.classList.add('hidden');

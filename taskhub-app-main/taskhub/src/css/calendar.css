@@ -1998,10 +1998,30 @@ div#task-detail-modal .calendar-modal-content {
 }
 
 .task-checkbox {
-	width: 16px;
-	height: 16px;
-	margin-right: 10px;
-	cursor: pointer;
+		width: 16px;
+		height: 16px;
+		margin-right: 10px;
+		cursor: pointer;
+}
+
+/* Hide status, priority, and assignee fields from task creation forms */
+#task-status,
+#task-priority,
+#task-assigned-id {
+    display: none !important;
+}
+
+/* Hide card form fields */
+#card-status,
+#card-category,
+#card-assigned-to,
+#update-card-status,
+#update-card-category,
+#update-card-assigned-to {
+  display: none !important;
+}
+
+.task-checkbox {
 	accent-color: #3b82f6;
 	flex-shrink: 0;
 	border-radius: 50%;

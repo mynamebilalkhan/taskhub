@@ -1,8 +1,12 @@
+import { WorkspaceScope } from './workspace-scope.js';
+
 // Function to render a new image in workspace context
-window.renderNewImageInWorkspace = function(image, pageId) {
+window.renderNewImageInWorkspace = function(image, pageId, workspaceScope = null) {
   console.log('Rendering new image in workspace context:', image);
   
-  const pageBlocksContainer = document.querySelector('#page-blocks-container');
+  const pageBlocksContainer = workspaceScope 
+    ? workspaceScope.querySelector('#page-blocks-container')
+    : document.querySelector('#page-blocks-container');
   if (!pageBlocksContainer) {
     console.error('Page blocks container not found in workspace');
     return;
@@ -129,10 +133,12 @@ window.downloadFileDirectWorkspace = downloadFileDirectWorkspace;
 window.downloadFileDirect = downloadFileDirectWorkspace; // For compatibility
 
 // Function to render a new file in workspace context
-window.renderNewFileInWorkspace = function(file, pageId) {
+window.renderNewFileInWorkspace = function(file, pageId, workspaceScope = null) {
   console.log('Rendering new file in workspace context:', file);
   
-  const pageBlocksContainer = document.querySelector('#page-blocks-container');
+  const pageBlocksContainer = workspaceScope 
+    ? workspaceScope.querySelector('#page-blocks-container')
+    : document.querySelector('#page-blocks-container');
   if (!pageBlocksContainer) {
     console.error('Page blocks container not found in workspace');
     return;
@@ -271,16 +277,16 @@ window.renderNewFileInWorkspace = function(file, pageId) {
 };
 
 // Independent task event listener setup function
-function setupTaskListenersIndependently(page, container) {
+function setupTaskListenersIndependently(page, container, workspaceScope = null) {
   console.log('🚀 Independent task listener setup for:', page.name);
   
   const attemptSetup = (attempt = 1, maxAttempts = 5) => {
     console.log(`📋 Attempt ${attempt}/${maxAttempts} to set up task listeners for:`, page.name);
     
-    const modal = container.querySelector("#add-task-modal");
-    const saveBtn = container.querySelector("#save-task-btn");
-    const cancelBtn = container.querySelector("#cancel-task-btn");
-    const addTaskBtn = container.querySelector("#add-task-btn");
+    const modal = workspaceScope ? workspaceScope.getElementById('add-task-modal') : container.querySelector("#add-task-modal");
+    const saveBtn = workspaceScope ? workspaceScope.getElementById('save-task-btn') : container.querySelector("#save-task-btn");
+    const cancelBtn = workspaceScope ? workspaceScope.getElementById('cancel-task-btn') : container.querySelector("#cancel-task-btn");
+    const addTaskBtn = workspaceScope ? workspaceScope.getElementById('add-task-btn') : container.querySelector("#add-task-btn");
     
     console.log('Task elements found:', {
       modal: !!modal,
@@ -311,15 +317,15 @@ function setupTaskListenersIndependently(page, container) {
         console.log('💾 Save button clicked for page:', page.name, '- Page ID:', page.id);
         
         const payload = {
-          title: container.querySelector("#task-title").value,
-          description: container.querySelector("#task-description").value,
-          dueDate: container.querySelector("#task-due-date").value,
-          status: container.querySelector("#task-status").value,
-          priority: container.querySelector("#task-priority").value,
-          assignedTo: container.querySelector("#task-assigned-id").value ? 
-            parseInt(container.querySelector("#task-assigned-id").value) : null,
+          title: (workspaceScope ? workspaceScope.getElementById('task-title') : container.querySelector("#task-title")).value,
+          description: (workspaceScope ? workspaceScope.getElementById('task-description') : container.querySelector("#task-description")).value,
+          dueDate: (workspaceScope ? workspaceScope.getElementById('task-due-date') : container.querySelector("#task-due-date")).value,
+          status: (workspaceScope ? workspaceScope.getElementById('task-status') : container.querySelector("#task-status")).value,
+          priority: (workspaceScope ? workspaceScope.getElementById('task-priority') : container.querySelector("#task-priority")).value,
+          assignedTo: (workspaceScope ? workspaceScope.getElementById('task-assigned-id') : container.querySelector("#task-assigned-id")).value ? 
+            parseInt((workspaceScope ? workspaceScope.getElementById('task-assigned-id') : container.querySelector("#task-assigned-id")).value) : null,
           pageId: page.id,
-          industry: container.querySelector("#task-industry").value
+          industry: (workspaceScope ? workspaceScope.getElementById('task-industry') : container.querySelector("#task-industry")).value
         };
         
         if (!payload.title || !payload.title.trim()) {
@@ -381,13 +387,13 @@ function setupTaskListenersIndependently(page, container) {
           modal.classList.add("hidden");
           
           // Reset form
-          container.querySelector("#task-title").value = "";
-          container.querySelector("#task-description").value = "";
-          container.querySelector("#task-due-date").value = "";
-          container.querySelector("#task-status").value = "";
-          container.querySelector("#task-priority").value = "";
-          container.querySelector("#task-assigned-id").selectedIndex = 0;
-          container.querySelector("#task-industry").value = "";
+          (workspaceScope ? workspaceScope.getElementById('task-title') : container.querySelector("#task-title")).value = "";
+          (workspaceScope ? workspaceScope.getElementById('task-description') : container.querySelector("#task-description")).value = "";
+          (workspaceScope ? workspaceScope.getElementById('task-due-date') : container.querySelector("#task-due-date")).value = "";
+          (workspaceScope ? workspaceScope.getElementById('task-status') : container.querySelector("#task-status")).value = "";
+          (workspaceScope ? workspaceScope.getElementById('task-priority') : container.querySelector("#task-priority")).value = "";
+          (workspaceScope ? workspaceScope.getElementById('task-assigned-id') : container.querySelector("#task-assigned-id")).selectedIndex = 0;
+          (workspaceScope ? workspaceScope.getElementById('task-industry') : container.querySelector("#task-industry")).value = "";
           
         } catch (e) {
           console.error("❌ Error creating task for page", page.name, ":", e);
@@ -407,13 +413,13 @@ function setupTaskListenersIndependently(page, container) {
         modal.classList.add("hidden");
         
         // Reset form
-        container.querySelector("#task-title").value = "";
-        container.querySelector("#task-description").value = "";
-        container.querySelector("#task-due-date").value = "";
-        container.querySelector("#task-status").value = "";
-        container.querySelector("#task-priority").value = "";
-        container.querySelector("#task-assigned-id").selectedIndex = 0;
-        container.querySelector("#task-industry").value = "";
+        (workspaceScope ? workspaceScope.getElementById('task-title') : container.querySelector("#task-title")).value = "";
+        (workspaceScope ? workspaceScope.getElementById('task-description') : container.querySelector("#task-description")).value = "";
+        (workspaceScope ? workspaceScope.getElementById('task-due-date') : container.querySelector("#task-due-date")).value = "";
+        (workspaceScope ? workspaceScope.getElementById('task-status') : container.querySelector("#task-status")).value = "";
+        (workspaceScope ? workspaceScope.getElementById('task-priority') : container.querySelector("#task-priority")).value = "";
+        (workspaceScope ? workspaceScope.getElementById('task-assigned-id') : container.querySelector("#task-assigned-id")).selectedIndex = 0;
+        (workspaceScope ? workspaceScope.getElementById('task-industry') : container.querySelector("#task-industry")).value = "";
       };
       cancelBtn._taskCancelHandler = cancelHandler;
       cancelBtn.addEventListener("click", cancelHandler);
@@ -436,7 +442,7 @@ function setupTaskListenersIndependently(page, container) {
   setTimeout(() => attemptSetup(), 100);
 }
 
-export async function init(workspace, container) {
+export async function init(workspace, container, workspaceScope) {
   window.currentLines.forEach(line => line.remove());
   window.currentLines = [];
   const folders = await window.__TAURI__.core.invoke("fetch_folders");
@@ -455,7 +461,13 @@ if (workspaceFolder) {
 
   breadcrumb = pathParts.join(" / ");
 }
-  container.innerHTML = `
+
+  // Set the workspace context for proper element scoping BEFORE setting HTML
+  if (workspaceScope) {
+    workspaceScope.setContext(workspace.id);
+  }
+
+  const htmlContent = `
     <div class="content-header">
       <h2>${workspace.name}</h2>
       <div class="content-header-actions">
@@ -526,15 +538,48 @@ if (workspaceFolder) {
         <button class="add-tab-circle" id="add-page-tab">+</button>
         <button class="add-tab-circle hidden" id="open-workspace-fab-menu">+</button>
       </div>
-    </div> 
+    </div>
+    
+    <!-- Workspace FAB Elements -->
+    <button class="fab hidden" id="workspace-fab">+</button>
+    <div class="fab-menu hidden" id="workspace-fab-menu">
+      <div class="fab-item" data-fab-action="file">
+        <img src="assets/images/file-icon.svg" alt="File" />
+        <span>File</span>
+      </div>
+      <div class="fab-item" data-fab-action="image">
+        <img src="assets/images/image-icon.svg" alt="Image" />
+        <span>Image</span>
+      </div>
+      <div class="fab-item" data-fab-action="note">
+        <img src="assets/images/note-icon.svg" alt="Note" />
+        <span>Note</span>
+      </div>
+      <div class="fab-item" data-fab-action="tasklist">
+        <img src="assets/images/task-icon.svg" alt="Task" />
+        <span>Task</span>
+      </div>
+      <div class="fab-item" data-fab-action="card">
+        <img src="assets/images/card-icon.svg" alt="Card" />
+        <span>Card</span>
+      </div>
+    </div>
     `;
+
+    // Use scoped HTML content if workspaceScope is available
+    if (workspaceScope) {
+      container.innerHTML = workspaceScope.scopeHtmlContent(htmlContent);
+    } else {
+      container.innerHTML = htmlContent;
+    }
+    
     initSidebarToggle();
     
     // Initialize workspace FAB menu
-    initWorkspaceFAB(container);
+    initWorkspaceFAB(container, workspaceScope);
     
     // Open the global FAB menu when the workspace FAB button is clicked
-    const openWorkspaceFabButton = container.querySelector("#open-workspace-fab-menu");
+    const openWorkspaceFabButton = workspaceScope ? workspaceScope.getElementById('open-workspace-fab-menu') : container.querySelector("#open-workspace-fab-menu");
     const globalFabMenuElement = document.getElementById("fab-menu");
     if (openWorkspaceFabButton && globalFabMenuElement) {
       openWorkspaceFabButton.addEventListener("click", (event) => {
@@ -553,19 +598,25 @@ if (workspaceFolder) {
   }
 
   function renderTabs(pages) {
-    const scrollContainer = container.querySelector("#workspace-tabs");
+    const scrollContainer = workspaceScope ? workspaceScope.getElementById('workspace-tabs') : container.querySelector("#workspace-tabs");
     scrollContainer.innerHTML = "";
   
-    const leftArrow = container.querySelector("#page-tabs-left");
-    const rightArrow = container.querySelector("#page-tabs-right");
-    const addButton = container.querySelector("#add-page-tab");
-    const mainContent = container.querySelector("#workspace-main-content");
+    const leftArrow = workspaceScope ? workspaceScope.getElementById('page-tabs-left') : container.querySelector("#page-tabs-left");
+    const rightArrow = workspaceScope ? workspaceScope.getElementById('page-tabs-right') : container.querySelector("#page-tabs-right");
+    const addButton = workspaceScope ? workspaceScope.getElementById('add-page-tab') : container.querySelector("#add-page-tab");
+    const mainContent = workspaceScope ? workspaceScope.getElementById('workspace-main-content') : container.querySelector("#workspace-main-content");
 
-    if (!container.querySelector("#page-tab-context-menu")) {
-      const menu = document.createElement("div");
+    if (!(workspaceScope ? workspaceScope.getElementById('page-tab-context-menu') : container.querySelector("#page-tab-context-menu"))) {
+      const menu = workspaceScope ? workspaceScope.createElement("div") : document.createElement("div");
       menu.className = "context-menu hidden";
-      menu.id = "page-tab-context-menu";
-      menu.innerHTML = `<button>New</button> <button id="delete-page-btn">Delete</button> <button id="delete-page-btn">Duplicate</button> <button id="rename-page-btn">Rename Page</button>`;
+      const menuId = workspaceScope ? workspaceScope.getScopedId('page-tab-context-menu') : 'page-tab-context-menu';
+      const deleteId = workspaceScope ? workspaceScope.getScopedId('delete-page-btn') : 'delete-page-btn';
+      const duplicateId = workspaceScope ? workspaceScope.getScopedId('duplicate-page-btn') : 'duplicate-page-btn';
+      const renameId = workspaceScope ? workspaceScope.getScopedId('rename-page-btn') : 'rename-page-btn';
+      
+      menu.id = menuId;
+      menu.innerHTML = `<button>New</button> <button id="${deleteId}">Delete</button> <button id="${duplicateId}">Duplicate</button> <button id="${renameId}">Rename Page</button>`;
+      
       container.appendChild(menu);
     }
     if (pages.length === 0) {
@@ -577,13 +628,13 @@ if (workspaceFolder) {
       // Additional verification for default page after a delay
       setTimeout(() => {
         console.log('🔍 Verifying default page functionality after load:', pages[0].name);
-        const mainContent = container.querySelector("#workspace-main-content");
+        const mainContent = workspaceScope ? workspaceScope.getElementById('workspace-main-content') : container.querySelector("#workspace-main-content");
         const pageWrapper = mainContent?.querySelector('.page-content-wrapper');
         
         if (pageWrapper) {
           const taskTable = pageWrapper.querySelector(".task-table-wrapper");
-          const addTaskBtn = pageWrapper.querySelector("#add-task-btn");
-          const pageBlocks = pageWrapper.querySelector("#page-blocks-container");
+          const addTaskBtn = workspaceScope ? workspaceScope.getElementById('add-task-btn') : pageWrapper.querySelector("#add-task-btn");
+          const pageBlocks = workspaceScope ? workspaceScope.getElementById('page-blocks-container') : pageWrapper.querySelector("#page-blocks-container");
           
           console.log('📋 Default page elements check:', {
             taskTable: !!taskTable,
@@ -597,7 +648,7 @@ if (workspaceFolder) {
           // Force task listener setup if needed
           if (taskTable && addTaskBtn) {
             console.log('🔧 Ensuring task listeners are set up for default page');
-            setupTaskListenersIndependently(pages[0], pageWrapper);
+            setupTaskListenersIndependently(pages[0], pageWrapper, workspaceScope);
           }
         }
       }, 1000);
@@ -612,7 +663,7 @@ if (workspaceFolder) {
       btn.textContent = page.name;
   
       btn.addEventListener("click", () => {
-        container.querySelectorAll(".workspace-tab").forEach(t => t.classList.remove("active"));
+        (workspaceScope ? workspaceScope.querySelectorAll(".workspace-tab") : container.querySelectorAll(".workspace-tab")).forEach(t => t.classList.remove("active"));
         btn.classList.add("active");
         
         console.log('🔄 Switching to page:', page.name);
@@ -621,12 +672,12 @@ if (workspaceFolder) {
         // Verify page functionality after switching (for existing pages)
         setTimeout(() => {
           console.log('🔧 Verifying page functionality after switch:', page.name);
-          const mainContent = container.querySelector("#workspace-main-content");
+          const mainContent = workspaceScope ? workspaceScope.getElementById('workspace-main-content') : container.querySelector("#workspace-main-content");
           const pageWrapper = mainContent?.querySelector('.page-content-wrapper');
           
           if (pageWrapper) {
             const taskTable = pageWrapper.querySelector(".task-table-wrapper");
-            const pageBlocks = pageWrapper.querySelector("#page-blocks-container");
+            const pageBlocks = workspaceScope ? workspaceScope.getElementById('page-blocks-container') : pageWrapper.querySelector("#page-blocks-container");
             
             // Apply styling if task table exists but doesn't have styling
             if (taskTable && !(taskTable.style.border && taskTable.style.borderRadius)) {
@@ -640,7 +691,7 @@ if (workspaceFolder) {
             
             // Set up task listeners for switched pages
             console.log('🔧 Setting up task listeners for switched page:', page.name);
-            setupTaskListenersIndependently(page, pageWrapper);
+            setupTaskListenersIndependently(page, pageWrapper, workspaceScope);
             
             console.log('📋 Page verification:', {
               taskTable: !!taskTable,
@@ -655,7 +706,7 @@ if (workspaceFolder) {
       btn.addEventListener("contextmenu", (e) => {
         e.preventDefault();
         
-        const menu = container.querySelector("#page-tab-context-menu");
+        const menu = workspaceScope ? workspaceScope.getElementById('page-tab-context-menu') : container.querySelector("#page-tab-context-menu");
         if (!menu) return;
       
         
@@ -691,9 +742,10 @@ if (workspaceFolder) {
         menu.dataset.pageId = page.id;
       });
 
-      const deleteBtn = container.querySelector("#delete-page-btn");
-      deleteBtn.addEventListener("click", async () => {
-        const menu = container.querySelector("#page-tab-context-menu");
+      const deleteBtn = workspaceScope ? workspaceScope.getElementById('delete-page-btn') : container.querySelector("#delete-page-btn");
+      if (deleteBtn) {
+        deleteBtn.addEventListener("click", async () => {
+        const menu = workspaceScope ? workspaceScope.getElementById('page-tab-context-menu') : container.querySelector("#page-tab-context-menu");
         const pageId = parseInt(menu.dataset.pageId);
         if (!pageId) return;
 
@@ -715,23 +767,25 @@ if (workspaceFolder) {
           menu.classList.add("hidden");
         }
       });
+      }
       
-        const renameBtn = container.querySelector("#rename-page-btn");
-    renameBtn.addEventListener("click", (e) => {
-      const menu = container.querySelector("#page-tab-context-menu");
+      const renameBtn = workspaceScope ? workspaceScope.getElementById('rename-page-btn') : container.querySelector("#rename-page-btn");
+      if (renameBtn) {
+        renameBtn.addEventListener("click", (e) => {
+      const menu = workspaceScope ? workspaceScope.getElementById('page-tab-context-menu') : container.querySelector("#page-tab-context-menu");
       const pageId = parseInt(menu.dataset.pageId, 10);
       if (!pageId) return;
-      const tabBtn = container.querySelector(`.workspace-tab[data-page-id="${pageId}"]`);
+      const tabBtn = workspaceScope ? workspaceScope.querySelector(`.workspace-tab[data-page-id="${pageId}"]`) : container.querySelector(`.workspace-tab[data-page-id="${pageId}"]`);
       if (!tabBtn) return;
 
       const currentName = tabBtn.textContent;
       
       // Create rename modal (same structure as add-page-modal)
-      let modal = container.querySelector("#rename-page-modal");
+      let modal = workspaceScope ? workspaceScope.getElementById('rename-page-modal') : container.querySelector("#rename-page-modal");
       
       // If modal doesn't exist, create it
       if (!modal) {
-        modal = document.createElement("div");
+        modal = workspaceScope ? workspaceScope.createElement("div") : document.createElement("div");
         modal.className = "modal-overlay hidden";
         modal.id = "rename-page-modal";
         modal.innerHTML = `
@@ -749,13 +803,13 @@ if (workspaceFolder) {
 
       // Show modal and set current name
       modal.classList.remove("hidden");
-      const input = modal.querySelector("#rename-page-name");
+      const input = workspaceScope ? workspaceScope.getElementById('rename-page-name') : modal.querySelector("#rename-page-name");
       input.value = currentName;
       input.focus();
       input.select(); // Select all text for easy editing
 
-      const confirmBtn = modal.querySelector("#confirm-rename-btn");
-      const cancelBtn = modal.querySelector("#cancel-rename-btn");
+      const confirmBtn = workspaceScope ? workspaceScope.getElementById('confirm-rename-btn') : modal.querySelector("#confirm-rename-btn");
+      const cancelBtn = workspaceScope ? workspaceScope.getElementById('cancel-rename-btn') : modal.querySelector("#cancel-rename-btn");
 
       // Remove existing event listeners to prevent multiple bindings
       const newConfirmBtn = confirmBtn.cloneNode(true);
@@ -850,20 +904,22 @@ if (workspaceFolder) {
           document.removeEventListener('keydown', handleKeyPress);
         }
       };
-      document.addEventListener('keydown', handleKeyPress);
+      workspaceScope.addEventListener(document, 'keydown', handleKeyPress);
 
       // Close modal when clicking outside
       modal.onclick = (e) => {
         if (e.target === modal) {
           modal.classList.add("hidden");
-          document.removeEventListener('keydown', handleKeyPress);
+          workspaceScope.removeEventListener(document, 'keydown', handleKeyPress);
         }
       };
 
       menu.classList.add("hidden");
     });
-      document.addEventListener("click", (e) => {
-        const menu = container.querySelector("#page-tab-context-menu");
+      }
+      
+      workspaceScope.addEventListener(document, "click", (e) => {
+        const menu = workspaceScope ? workspaceScope.getElementById('page-tab-context-menu') : container.querySelector("#page-tab-context-menu");
         if (!menu) return;
       
         if (!e.target.closest("#page-tab-context-menu")) {
@@ -873,11 +929,11 @@ if (workspaceFolder) {
     });
     
     addButton.onclick = () => {
-      let modal = container.querySelector("#add-page-modal");
+      let modal = workspaceScope ? workspaceScope.getElementById('add-page-modal') : container.querySelector("#add-page-modal");
       
       // Ako ne postoji, napravi ga
       if (!modal) {
-        modal = document.createElement("div");
+        modal = workspaceScope ? workspaceScope.createElement("div") : document.createElement("div");
         modal.className = "modal-overlay hidden";
         modal.id = "add-page-modal";
         modal.innerHTML = `
@@ -894,12 +950,12 @@ if (workspaceFolder) {
       }
     
       modal.classList.remove("hidden");
-      const input = modal.querySelector("#new-page-name");
+      const input = workspaceScope ? workspaceScope.getElementById('new-page-name') : modal.querySelector("#new-page-name");
       input.value = "";
       input.focus();
     
-      const createBtn = modal.querySelector("#create-page-btn");
-      const cancelBtn = modal.querySelector("#cancel-page-btn");
+      const createBtn = workspaceScope ? workspaceScope.getElementById('create-page-btn') : modal.querySelector("#create-page-btn");
+      const cancelBtn = workspaceScope ? workspaceScope.getElementById('cancel-page-btn') : modal.querySelector("#cancel-page-btn");
     
       createBtn.onclick = async () => {
         const name = input.value.trim();
@@ -915,10 +971,10 @@ if (workspaceFolder) {
           
           // Automatically switch to the new page
           setTimeout(() => {
-            const newTab = container.querySelector(`[data-page-id="${newPage.id}"]`);
+            const newTab = workspaceScope ? workspaceScope.querySelector(`[data-page-id="${newPage.id}"]`) : container.querySelector(`[data-page-id="${newPage.id}"]`);
             if (newTab) {
               // Remove active class from all tabs
-              container.querySelectorAll(".workspace-tab").forEach(t => t.classList.remove("active"));
+              (workspaceScope ? workspaceScope.querySelectorAll(".workspace-tab") : container.querySelectorAll(".workspace-tab")).forEach(t => t.classList.remove("active"));
               // Add active class to new tab
               newTab.classList.add("active");
               // Render the new page content
@@ -928,15 +984,15 @@ if (workspaceFolder) {
               // Additional delay to ensure page is fully initialized with all features
               setTimeout(() => {
                 console.log('🔧 Verifying complete page initialization for:', newPage.name);
-                const mainContent = container.querySelector("#workspace-main-content");
+                const mainContent = workspaceScope ? workspaceScope.getElementById('workspace-main-content') : container.querySelector("#workspace-main-content");
                 const pageWrapper = mainContent?.querySelector('.page-content-wrapper');
                 
                 if (pageWrapper) {
                   // Check for essential elements
-                  const taskForm = pageWrapper.querySelector("#task-title");
-                  const addTaskBtn = pageWrapper.querySelector("#add-task-btn");
-                  const taskTable = pageWrapper.querySelector(".task-table-wrapper");
-                  const pageBlocks = pageWrapper.querySelector("#page-blocks-container");
+                  const taskForm = workspaceScope ? workspaceScope.getElementById('task-title') : pageWrapper.querySelector("#task-title");
+                  const addTaskBtn = workspaceScope ? workspaceScope.getElementById('add-task-btn') : pageWrapper.querySelector("#add-task-btn");
+                  const taskTable = workspaceScope ? workspaceScope.querySelector(".task-table-wrapper") : pageWrapper.querySelector(".task-table-wrapper");
+                  const pageBlocks = workspaceScope ? workspaceScope.getElementById('page-blocks-container') : pageWrapper.querySelector("#page-blocks-container");
                   
                   console.log('📋 Page elements check:', {
                     taskForm: !!taskForm,
@@ -967,7 +1023,7 @@ if (workspaceFolder) {
                     
                     // CRITICAL FIX: Set up task listeners for the new page
                     console.log('🔧 Setting up task listeners for new page:', newPage.name, 'with ID:', newPage.id);
-                    setupTaskListenersIndependently(newPage, pageWrapper);
+                    setupTaskListenersIndependently(newPage, pageWrapper, workspaceScope);
                     
                   } else {
                     console.warn('⚠️ Some page elements missing for:', newPage.name);
@@ -991,7 +1047,7 @@ if (workspaceFolder) {
     };
 
     if (mainContent) {
-        mainContent.addEventListener("scroll", () => {
+        workspaceScope.addEventListener(mainContent, "scroll", () => {
         window.currentLines.forEach(line => line.position());
       });
     }
@@ -1011,7 +1067,7 @@ if (workspaceFolder) {
     console.log('🔄 Switching to existing page:', page.name);
     
     // Check if page content already exists
-    const mainContent = container.querySelector("#workspace-main-content");
+    const mainContent = workspaceScope ? workspaceScope.getElementById('workspace-main-content') : container.querySelector("#workspace-main-content");
     const pageWrapper = mainContent?.querySelector('.page-content-wrapper');
     
     if (!pageWrapper) {
@@ -1039,7 +1095,11 @@ if (workspaceFolder) {
       
       // Fetch data for this specific page with individual loading states
       showPageLoadingOverlay('Loading...');
-      const tasks = await window.__TAURI__.core.invoke("fetch_tasks_for_workspace", { workspaceId: page.workspaceId });
+      const allWorkspaceTasks = await window.__TAURI__.core.invoke("fetch_tasks_for_workspace", { workspaceId: page.workspaceId });
+      // Filter tasks to only show tasks for the current page
+      const currentPageIdNum = Number(page.id);
+      const tasks = allWorkspaceTasks.filter(task => Number(task.pageId) === currentPageIdNum);
+      console.log('📋 Filtered tasks for page', currentPageIdNum, ':', tasks.length, 'out of', allWorkspaceTasks.length, 'total workspace tasks');
       
       showPageLoadingOverlay('Loading...');
       const notes = await window.__TAURI__.core.invoke("fetch_textbox_for_page", { pageId: page.id });
@@ -1072,18 +1132,13 @@ if (workspaceFolder) {
         files: files.length
       });
       
-      // Use the proper page.js reload function for consistent functionality
-      if (window.reloadCurrentPageData) {
-        console.log('🔄 Using page.js reloadCurrentPageData for:', page.name);
-        await window.reloadCurrentPageData();
-      } else {
-        console.log('⚠️ window.reloadCurrentPageData not available, falling back to manual reload');
-        await manualPageReload(page, pageWrapper, tasks, notes, images, cards, files);
-        
-        // Set up task listeners for the switched page
-        console.log('🔧 Setting up task listeners for switched page:', page.name);
-        setupTaskListenersIndependently(page, pageWrapper);
-      }
+      // Always use manual reload for workspace tab switching to ensure fresh data
+      console.log('🔄 Using manual reload for workspace tab switching:', page.name);
+      await manualPageReload(page, pageWrapper, tasks, notes, images, cards, files);
+      
+      // Set up task listeners for the switched page
+      console.log('🔧 Setting up task listeners for switched page:', page.name);
+      setupTaskListenersIndependently(page, pageWrapper, workspaceScope);
       
       // Hide loading overlay
       hidePageLoadingOverlay();
@@ -1210,7 +1265,7 @@ if (workspaceFolder) {
       // Render files with consistent styling
       files.forEach(file => {
         // Use the renderNewFileInWorkspace function for consistency
-        window.renderNewFileInWorkspace(file, page.id);
+        window.renderNewFileInWorkspace(file, page.id, workspaceScope);
       });
       
       // Enable drag and drop for blocks
@@ -1301,10 +1356,10 @@ if (workspaceFolder) {
   }
 
   function renderPageContent(page) {
-    const mainContent = container.querySelector("#workspace-main-content");
+    const mainContent = workspaceScope ? workspaceScope.getElementById('workspace-main-content') : container.querySelector("#workspace-main-content");
     if (!mainContent) return;
   
-  fetch('pages/page.html')
+  fetch('../pages/page.html')
   .then(res => res.text())
   .then(html => {
     mainContent.innerHTML = html;
@@ -1318,13 +1373,18 @@ if (workspaceFolder) {
       return;
     }
     
+    // Set the page context in workspace scope
+    if (workspaceScope) {
+      workspaceScope.setContext(workspace.id, page.id);
+    }
+    
     // Initialize page with all our enhanced functionality
-    init(page, pageWrapper);
+    init(page, pageWrapper, workspaceScope);
     console.log('✅ Page initialization complete for:', page.name);
     
     // Set up task event listeners independently (alternate solution)
     console.log('🔧 Setting up task listeners independently for:', page.name);
-    setupTaskListenersIndependently(page, pageWrapper);
+    setupTaskListenersIndependently(page, pageWrapper, workspaceScope);
     
     // Add window resize listener for line positioning
     window.addEventListener('resize', () => {
@@ -1479,12 +1539,22 @@ if (workspaceFolder) {
     // Direct download function that skips the modal
 
     // Save File Modal functionality
-    function showSaveFileModal(fileName, fileUrl) {
-        const modal = document.getElementById('save-file-modal');
-        const fileNameElement = document.getElementById('save-file-name');
-        const chooseLocationBtn = document.getElementById('choose-location');
-        const cancelBtn = document.getElementById('save-file-cancel-btn');
-        const closeBtn = document.getElementById('save-file-close-btn');
+    function showSaveFileModal(fileName, fileUrl, workspaceScope = null) {
+        const modal = workspaceScope 
+            ? workspaceScope.getElementById('save-file-modal')
+            : document.getElementById('save-file-modal');
+        const fileNameElement = workspaceScope 
+            ? workspaceScope.getElementById('save-file-name')
+            : document.getElementById('save-file-name');
+        const chooseLocationBtn = workspaceScope 
+            ? workspaceScope.getElementById('choose-location')
+            : document.getElementById('choose-location');
+        const cancelBtn = workspaceScope 
+            ? workspaceScope.getElementById('save-file-cancel-btn')
+            : document.getElementById('save-file-cancel-btn');
+        const closeBtn = workspaceScope 
+            ? workspaceScope.getElementById('save-file-close-btn')
+            : document.getElementById('save-file-close-btn');
 
         if (!modal || !fileNameElement) {
             console.error('Save file modal elements not found');
@@ -1566,10 +1636,18 @@ if (workspaceFolder) {
         const handleKeyPress = (e) => {
             if (e.key === 'Escape') {
                 closeModal();
-                document.removeEventListener('keydown', handleKeyPress);
+                if (workspaceScope) {
+                    workspaceScope.removeEventListener(document, 'keydown', handleKeyPress);
+                } else {
+                    document.removeEventListener('keydown', handleKeyPress);
+                }
             }
         };
-        document.addEventListener('keydown', handleKeyPress);
+        if (workspaceScope) {
+            workspaceScope.addEventListener(document, 'keydown', handleKeyPress);
+        } else {
+            document.addEventListener('keydown', handleKeyPress);
+        }
     }
     
     // Make functions globally accessible
@@ -1603,7 +1681,7 @@ if (workspaceFolder) {
           end: function(event) {
             event.target.classList.remove('dragging');
             // Update positions after drag ends
-            const blocks = Array.from(container.querySelectorAll('.page-block'));
+            const blocks = Array.from(workspaceScope ? workspaceScope.querySelectorAll('.page-block') : container.querySelectorAll('.page-block'));
             blocks.forEach((block, index) => {
               // You can save the new positions to your database here if needed
               console.log(`Block ${block.dataset.id} is now at position ${index}`);
@@ -1665,9 +1743,9 @@ if (workspaceFolder) {
 }
 
 // FAB menu functionality for workspace
-function initWorkspaceFAB(container) {
-  const workspaceFab = container.querySelector('#workspace-fab');
-  const workspaceFabMenu = container.querySelector('#workspace-fab-menu');
+function initWorkspaceFAB(container, workspaceScope) {
+  const workspaceFab = workspaceScope ? workspaceScope.getElementById('workspace-fab') : container.querySelector('#workspace-fab');
+  const workspaceFabMenu = workspaceScope ? workspaceScope.getElementById('workspace-fab-menu') : container.querySelector('#workspace-fab-menu');
   
   if (!workspaceFab || !workspaceFabMenu) {
     console.warn('Workspace FAB elements not found');
@@ -1684,14 +1762,25 @@ function initWorkspaceFAB(container) {
   });
   
   // Hide menu when clicking outside
-  document.addEventListener('click', (e) => {
-    const clickedFab = e.target.closest('#workspace-fab');
-    const clickedMenu = e.target.closest('#workspace-fab-menu');
-    
-    if (!clickedFab && !clickedMenu) {
-      workspaceFabMenu.classList.add('hidden');
-    }
-  });
+  if (workspaceScope) {
+    workspaceScope.addEventListener(document, 'click', (e) => {
+      const clickedFab = e.target.closest('#workspace-fab');
+      const clickedMenu = e.target.closest('#workspace-fab-menu');
+      
+      if (!clickedFab && !clickedMenu) {
+        workspaceFabMenu.classList.add('hidden');
+      }
+    });
+  } else {
+    document.addEventListener('click', (e) => {
+      const clickedFab = e.target.closest('#workspace-fab');
+      const clickedMenu = e.target.closest('#workspace-fab-menu');
+      
+      if (!clickedFab && !clickedMenu) {
+        workspaceFabMenu.classList.add('hidden');
+      }
+    });
+  }
   
   // FAB menu item click handler
   workspaceFabMenu.addEventListener('click', async (e) => {
@@ -1702,28 +1791,28 @@ function initWorkspaceFAB(container) {
     workspaceFabMenu.classList.add('hidden');
     
     const action = item.dataset.fabAction;
-    await handleWorkspaceFabAction(action, container);
+    await handleWorkspaceFabAction(action, container, workspaceScope);
   });
 }
 
 // Handle FAB menu actions in workspace context
-async function handleWorkspaceFabAction(action, container) {
+async function handleWorkspaceFabAction(action, container, workspaceScope = null) {
   try {
     switch (action) {
       case 'file':
-        await addFileToWorkspace(container);
+        await addFileToWorkspace(container, workspaceScope);
         break;
       case 'image':
-        await addImageToWorkspace(container);
+        await addImageToWorkspace(container, workspaceScope);
         break;
       case 'note':
-        await addNoteToWorkspace(container);
+        await addNoteToWorkspace(container, workspaceScope);
         break;
       case 'tasklist':
-        await addTaskToWorkspace(container);
+        await addTaskToWorkspace(container, workspaceScope);
         break;
       case 'card':
-        await addCardToWorkspace(container);
+        await addCardToWorkspace(container, workspaceScope);
         break;
       default:
         console.warn('Unknown FAB action:', action);
@@ -1734,10 +1823,10 @@ async function handleWorkspaceFabAction(action, container) {
 }
 
 // Add file to workspace
-async function addFileToWorkspace(container) {
+async function addFileToWorkspace(container, workspaceScope = null) {
   try {
     // Get current page ID from the active workspace tab
-    const activePageTab = container.querySelector('.workspace-tab.active');
+    const activePageTab = workspaceScope ? workspaceScope.querySelector('.workspace-tab.active') : container.querySelector('.workspace-tab.active');
     const pageId = activePageTab ? parseInt(activePageTab.dataset.pageId) : null;
     
     if (!pageId) {
@@ -1799,19 +1888,19 @@ async function addFileToWorkspace(container) {
 }
 
 // Placeholder functions for other FAB actions
-async function addImageToWorkspace(container) {
+async function addImageToWorkspace(container, workspaceScope = null) {
   console.log('Add image to workspace - not implemented yet');
 }
 
-async function addNoteToWorkspace(container) {
+async function addNoteToWorkspace(container, workspaceScope = null) {
   console.log('Add note to workspace - not implemented yet');
 }
 
-async function addTaskToWorkspace(container) {
+async function addTaskToWorkspace(container, workspaceScope = null) {
   console.log('Add task to workspace - not implemented yet');
 }
 
-async function addCardToWorkspace(container) {
+async function addCardToWorkspace(container, workspaceScope = null) {
   console.log('Add card to workspace - not implemented yet');
 }
 

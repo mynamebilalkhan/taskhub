@@ -627,3 +627,23 @@ button#save-file-cancel-btn {
     border: none;
     padding: 8px 15px;
 }
+
+/* Hide status, priority, and assignee fields from task creation forms */
+#task-status,
+#task-priority,
+#task-assigned-id,
+#update-task-status,
+#update-task-priority,
+#update-task-assigned-id {
+    display: none !important;
+}
+
+/* Hide card form fields */
+#card-status,
+#card-category,
+#card-assigned-to,
+#update-card-status,
+#update-card-category,
+#update-card-assigned-to {
+  display: none !important;
+}

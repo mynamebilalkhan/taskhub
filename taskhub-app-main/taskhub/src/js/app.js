@@ -22,7 +22,7 @@ function setActiveMenuItem(clickedLi) {
     }
 
     // 1) Fetch the dashboard HTML partial
-    const res = await fetch('pages/dashboard.html');
+    const res = await fetch('../pages/dashboard.html');
     const html = await res.text();
     document.querySelector('#main-content').innerHTML = html;
 
@@ -35,7 +35,7 @@ function setActiveMenuItem(clickedLi) {
   
   window.loadVaults = async function (event) {
     if (event?.currentTarget) setActiveMenuItem(event.currentTarget);
-    const res = await fetch('pages/myvaults.html');
+    const res = await fetch('../pages/myvaults.html');
     const html = await res.text();
     document.querySelector('#main-content').innerHTML = html;
     const { init } = await import('./myvaults.js');
@@ -51,7 +51,7 @@ function setActiveMenuItem(clickedLi) {
   window.loadCalendar = async function (event) {
     if (event?.currentTarget) setActiveMenuItem(event.currentTarget);
     try {
-      const res = await fetch('pages/calendar.html');
+      const res = await fetch('../pages/calendar.html');
       const html = await res.text();
       document.querySelector('#main-content').innerHTML = html;
   
@@ -65,7 +65,7 @@ function setActiveMenuItem(clickedLi) {
 window.loadSettings = async function (event) {
   if (event?.currentTarget) setActiveMenuItem(event.currentTarget);
   try {
-    const res = await fetch('pages/settings.html');
+    const res = await fetch('../pages/settings.html');
     const html = await res.text();
     document.querySelector('#main-content').innerHTML = html;
 
@@ -80,7 +80,7 @@ window.loadSettings = async function (event) {
 window.loadSubscription = async function (event) {
   if (event?.currentTarget) setActiveMenuItem(event.currentTarget);
   try {
-    const res = await fetch('pages/subscription.html');
+    const res = await fetch('../pages/subscription.html');
     const html = await res.text();
     document.querySelector('#main-content').innerHTML = html;
 

@@ -1,3 +1,5 @@
+import { WorkspaceScope } from './workspace-scope.js';
+
 let documentsRootId = null;
 let singleVaultId;
 export function init(vaultIdParam) {
@@ -2097,7 +2099,7 @@ async function renderNewImage(image, pageId) {
   if (isInWorkspace && window.renderNewImageInWorkspace) {
     // Use workspace-specific rendering function
     console.log("Rendering image in workspace context");
-    window.renderNewImageInWorkspace(image, pageId);
+    window.renderNewImageInWorkspace(image, pageId, window.workspaceScope);
     return;
   }
   
@@ -2145,7 +2147,7 @@ async function renderNewFile(file, pageId) {
   if (isInWorkspace && window.renderNewFileInWorkspace) {
     // Use workspace-specific rendering function
     console.log("Rendering file in workspace context");
-    window.renderNewFileInWorkspace(file, pageId);
+    window.renderNewFileInWorkspace(file, pageId, window.workspaceScope);
     return;
   }
   
@@ -2323,14 +2325,23 @@ export function openWorkspaceTab(workspace, forceNew = false) {
   content.id = `tab-${workspace.id}`;
   tabsContent.appendChild(content);
 
-  fetch('pages/workspace.html')
+  fetch('../pages/workspace.html')
     .then(res => res.text())
     .then(html => {
-      content.innerHTML = html;
+      // Create workspace scope instance
+      const workspaceScope = new WorkspaceScope(`ws-${workspace.id}`);
+      
+      // Scope the HTML content to prevent ID conflicts
+      const scopedHtml = workspaceScope.scopeHtmlContent(html);
+      content.innerHTML = scopedHtml;
+      
+      // Store the workspace scope instance for later use
+      content.workspaceScope = workspaceScope;
+      
       return import('./workspace.js');
     })
     .then(({ init }) => {
-      init(workspace, content.querySelector('.workspace-container'));
+      init(workspace, content.querySelector('.workspace-container'), content.workspaceScope);
       // Trigger task fetching for the newly opened workspace
       console.log('🔄 Workspace opened, triggering task fetch for workspace:', workspace.id);
     });
@@ -2366,6 +2377,11 @@ export function openWorkspaceTab(workspace, forceNew = false) {
   }, 200);
 
   tab.querySelector('.close-tab').addEventListener('click', () => {
+    // Clean up workspace scope when closing tab
+    if (content.workspaceScope) {
+      content.workspaceScope.cleanup();
+    }
+    
     // Safely remove workspace-specific lines
     if (window.workspaceLines && window.workspaceLines[workspace.id]) {
       window.workspaceLines[workspace.id].forEach(line => {
